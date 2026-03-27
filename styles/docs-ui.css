@@ -198,20 +198,6 @@
   color: var(--nextra-text-color, #aaa);
 }
 
-.gk-arch-figure-wrap {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
-  margin-bottom: 0.95rem;
-}
-
-.gk-arch-figure {
-  width: 100%;
-  display: block;
-}
-
 .gk-next-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));

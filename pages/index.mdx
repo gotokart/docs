@@ -61,16 +61,31 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
 ## High-level architecture
 
 <p className="gk-arch-note">
-  Single source architecture diagram (runtime and deployment flow):
+  Single source architecture diagram (runtime + delivery flow):
 </p>
 
-<div className="gk-arch-figure-wrap">
-  <img
-    src="/assets/gotokart-architecture.svg"
-    alt="GoToKart high-level architecture diagram"
-    className="gk-arch-figure"
-  />
-</div>
+```mermaid
+flowchart TB
+  U[Users] --> FE[Frontend UI<br/>GitHub Pages]
+  FE -->|REST API calls| BE[Backend API<br/>Spring Boot]
+  BE -->|JPA/Hibernate| DB[(MySQL)]
+
+  Dev[Developer] --> RepoFE[github.com/gotokart/frontend]
+  Dev --> RepoBE[github.com/gotokart/backend]
+  Dev --> RepoDocs[github.com/gotokart/docs]
+  Dev --> RepoInfra[github.com/gotokart/infra]
+
+  RepoFE --> CI[GitHub Actions / CI-CD]
+  RepoDocs --> CI
+  RepoInfra --> CI
+  RepoBE --> RailwayDeploy[Railway Auto Deploy]
+
+  CI --> FE
+  CI --> Docs[Docs Site<br/>GitHub Pages]
+  FE --> DomainFE[gotokart.github.io/frontend]
+  Docs --> DomainDocs[gotokart.github.io/docs]
+  RailwayDeploy --> DomainAPI[api.gotokart.in]
+```
 
 ## Where to go next
 
