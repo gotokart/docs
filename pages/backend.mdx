@@ -12,6 +12,30 @@ GoToKart backend is a **Spring Boot** application exposing REST APIs for users, 
 
 For deployed environment, replace host with your production API domain.
 
+## Quick jump
+
+<div className="gk-chip-row">
+  <a className="gk-chip" href="#users">Users</a>
+  <a className="gk-chip" href="#products">Products</a>
+  <a className="gk-chip" href="#cart">Cart</a>
+  <a className="gk-chip" href="#orders">Orders</a>
+</div>
+
+## Featured endpoints
+
+<div className="gk-api-card">
+  <span className="gk-method gk-post">POST</span><code>/api/users/register</code>
+  <p className="gk-api-meta">Use case: signup flow · Auth: no · Typical response: created user profile.</p>
+</div>
+<div className="gk-api-card">
+  <span className="gk-method gk-get">GET</span><code>/api/products</code>
+  <p className="gk-api-meta">Use case: storefront listing · Auth: no · Use this as your product source of truth.</p>
+</div>
+<div className="gk-api-card">
+  <span className="gk-method gk-post">POST</span><code>/api/orders/&#123;userId&#125;/place</code>
+  <p className="gk-api-meta">Use case: checkout · Auth: user context · Triggers stock update + cart clear.</p>
+</div>
+
 ## Main endpoints (summary)
 
 | Method | Path | Description |
@@ -20,6 +44,7 @@ For deployed environment, replace host with your production API domain.
 | `GET` | `/api/users` | List users |
 | `GET` | `/api/users/{id}` | Get user by id |
 
+<a id="products"></a>
 ### Products
 
 | Method | Path | Description |
@@ -30,6 +55,7 @@ For deployed environment, replace host with your production API domain.
 | `PUT` | `/api/products/{id}` | Update |
 | `DELETE` | `/api/products/{id}` | Delete |
 
+<a id="cart"></a>
 ### Cart
 
 | Method | Path | Description |
@@ -38,6 +64,7 @@ For deployed environment, replace host with your production API domain.
 | `POST` | `/api/cart/{userId}/add?productId=&quantity=` | Add item |
 | `DELETE` | `/api/cart/{userId}/remove?productId=` | Remove item |
 
+<a id="orders"></a>
 ### Orders
 
 | Method | Path | Description |
@@ -47,6 +74,7 @@ For deployed environment, replace host with your production API domain.
 
 ## Endpoint guide (click to expand)
 
+<a id="users"></a>
 ### Users
 
 <details>
