@@ -198,6 +198,30 @@
   color: var(--nextra-text-color, #aaa);
 }
 
+.gk-arch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 0.9rem;
+}
+
+.gk-arch-card {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.68rem 0.74rem;
+}
+
+.gk-arch-card strong {
+  display: block;
+  margin-bottom: 0.22rem;
+}
+
+.gk-arch-card span {
+  font-size: 0.84rem;
+  color: var(--nextra-text-color, #aaa);
+}
+
 .gk-next-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));

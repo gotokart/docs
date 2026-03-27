@@ -68,13 +68,51 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
   Request flow: Browser loads storefront, storefront calls backend APIs, backend persists data in MySQL.
 </div>
 
+<div className="gk-arch-grid">
+  <div className="gk-arch-card">
+    <strong>1) Presentation layer</strong>
+    <span>Static storefront hosted on GitHub Pages serves UI, filters, cart, and order flow.</span>
+  </div>
+  <div className="gk-arch-card">
+    <strong>2) API layer</strong>
+    <span>Spring Boot backend exposes `/api/users`, `/api/products`, `/api/cart`, and `/api/orders`.</span>
+  </div>
+  <div className="gk-arch-card">
+    <strong>3) Data layer</strong>
+    <span>MySQL stores users, products, cart items, orders, and order item snapshots.</span>
+  </div>
+  <div className="gk-arch-card">
+    <strong>4) Delivery layer</strong>
+    <span>GitHub Actions builds docs and deploys updates to GitHub Pages automatically.</span>
+  </div>
+</div>
+
 ```mermaid
-flowchart LR
-  Browser[Browser] --> Pages[Frontend - GitHub Pages]
-  Pages --> API[Backend API]
-  API --> DB[(MySQL)]
-  Dev[Git push] --> Actions[GitHub Actions]
-  Actions --> Pages
+flowchart TD
+  User[User Browser] --> Domain[gotokart.github.io/frontend]
+  Domain --> Frontend[Frontend App]
+  Frontend -->|REST Calls| API[Spring Boot API]
+  API -->|JPA/Hibernate| MySQL[(MySQL Database)]
+
+  Dev[Developer Push] --> GH[GitHub Repositories]
+  GH --> Actions[GitHub Actions]
+  Actions --> DocsDeploy[Deploy Docs to GitHub Pages]
+  Actions --> FrontendDeploy[Deploy Frontend to GitHub Pages]
+
+  subgraph Runtime
+    Domain
+    Frontend
+    API
+    MySQL
+  end
+
+  subgraph Delivery
+    Dev
+    GH
+    Actions
+    DocsDeploy
+    FrontendDeploy
+  end
 ```
 
 ## Where to go next

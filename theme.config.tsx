@@ -20,9 +20,6 @@ const config: DocsThemeConfig = {
   project: {
     link: 'https://github.com/gotokart',
   },
-  chat: {
-    link: 'https://github.com/gotokart/docs/discussions',
-  },
   docsRepositoryBase: 'https://github.com/gotokart/docs/tree/main',
   editLink: {
     text: 'Edit this page on GitHub →',
