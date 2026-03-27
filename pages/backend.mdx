@@ -1,0 +1,46 @@
+# Backend API
+
+GoToKart backend is a **Spring Boot** application exposing REST APIs for users, products, shopping cart, and orders, backed by **MySQL**.
+
+## Stack
+
+- Java 21 · Spring Boot 3.x · Spring Data JPA · Maven
+
+## Main endpoints (summary)
+
+### Users
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/users/register` | Register a user |
+| `GET` | `/api/users` | List users |
+| `GET` | `/api/users/{id}` | Get user by id |
+
+### Products
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/products` | List products |
+| `GET` | `/api/products/{id}` | Get product |
+| `POST` | `/api/products` | Create (merges stock if name exists) |
+| `PUT` | `/api/products/{id}` | Update |
+| `DELETE` | `/api/products/{id}` | Delete |
+
+### Cart
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/cart/{userId}` | Cart for user |
+| `POST` | `/api/cart/{userId}/add?productId=&quantity=` | Add item |
+| `DELETE` | `/api/cart/{userId}/remove?productId=` | Remove item |
+
+### Orders
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/orders/{userId}/place` | Place order (clears cart, updates stock) |
+| `GET` | `/api/orders/{userId}` | Order history |
+
+## Database
+
+Create a database (example name `gotokartDB`) and configure JDBC URL, user, and password in `application.properties`. See the [backend README](https://github.com/gotokart/backend/blob/main/README.md) for full examples and troubleshooting.

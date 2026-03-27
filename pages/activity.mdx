@@ -1,0 +1,13 @@
+import ActivityTimeline from '../components/ActivityTimeline'
+
+# Commit activity
+
+This page lists **commits to this documentation repository**, grouped by **calendar day**. It is generated automatically from `git log` when you run `npm run dev` or `npm run build`, so it always reflects the history available in your checkout (CI uses a full clone so the timeline is complete).
+
+<ActivityTimeline />
+
+### How it works
+
+1. `scripts/generate-activity.mjs` runs before dev and build.
+2. It writes `generated/activity.json`.
+3. The timeline below reads that file and links each commit to GitHub.

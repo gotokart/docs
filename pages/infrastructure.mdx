@@ -1,0 +1,24 @@
+# Infrastructure
+
+Deployment layout for GoToKart (as described in the [infra repo](https://github.com/gotokart/infra)).
+
+## Topology
+
+| Piece | Hosting | Notes |
+|-------|---------|--------|
+| Frontend | GitHub Pages | Static site |
+| Backend API | Railway | Spring Boot service |
+| Database | Railway MySQL | Managed MySQL |
+| CI/CD | `.github` repo | Shared workflows |
+
+## Domains (example)
+
+- **Site:** `gotokart.in` (frontend)
+- **API:** `api.gotokart.in` (backend API)
+
+## Flow
+
+1. Push to `frontend` → pipeline builds / publishes to GitHub Pages.
+2. Push to `backend` → Railway deploys the API.
+
+Exact scripts and workflow files live in `infra` and `gotokart/.github` — check those repos for the current source of truth.

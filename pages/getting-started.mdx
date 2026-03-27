@@ -1,0 +1,40 @@
+# Getting started
+
+## Clone the project
+
+```bash
+git clone https://github.com/gotokart/backend.git
+git clone https://github.com/gotokart/frontend.git
+git clone https://github.com/gotokart/infra.git
+git clone https://github.com/gotokart/docs.git
+```
+
+## Prerequisites
+
+- **Backend:** Java 21, Maven 3.9+, MySQL 8+
+- **Frontend:** modern browser; backend running locally
+- **Docs (this site):** Node.js 18+, npm (or pnpm/yarn)
+
+## Run the API
+
+```bash
+cd backend
+# Create DB `gotokartDB` in MySQL, then set credentials in src/main/resources/application.properties
+mvn clean spring-boot:run
+```
+
+API base URL: `http://localhost:8080`
+
+## Run the storefront
+
+Open `frontend/index.html` in a browser, or serve the folder with any static server. The UI calls `http://localhost:8080/api` by default (see `script.js` in the frontend repo).
+
+## Run the documentation site locally
+
+```bash
+cd docs
+npm install
+npm run dev
+```
+
+Then open `http://localhost:3000` (or the URL printed in the terminal).
