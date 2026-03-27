@@ -20,7 +20,16 @@ const config: DocsThemeConfig = {
   project: {
     link: 'https://github.com/gotokart',
   },
+  chat: {
+    link: 'https://github.com/gotokart/docs/discussions',
+  },
   docsRepositoryBase: 'https://github.com/gotokart/docs/tree/main',
+  editLink: {
+    text: 'Edit this page on GitHub →',
+  },
+  feedback: {
+    content: 'Question? Give feedback →',
+  },
   footer: {
     text: (
       <span>
@@ -32,6 +41,9 @@ const config: DocsThemeConfig = {
     ),
   },
   darkMode: true,
+  nextThemes: {
+    defaultTheme: 'dark',
+  },
   primaryHue: 38,
   primarySaturation: 100,
   sidebar: {
@@ -52,6 +64,11 @@ const config: DocsThemeConfig = {
       />
     </>
   ),
+  useNextSeoProps() {
+    return {
+      titleTemplate: '%s | GoToKart Docs',
+    }
+  },
 }
 
 export default config

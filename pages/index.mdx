@@ -3,12 +3,19 @@
 Welcome to the official docs for [GoToKart](https://github.com/gotokart), covering product architecture, APIs, deployment, and project activity in one place.
 
 <div className="gk-hero">
+  <span className="gk-hero-eyebrow">Official platform docs</span>
   <h2>Build, Ship, and Track GoToKart</h2>
   <p>Everything you need for API understanding, deployment flow, and docs activity in one place.</p>
+  <div className="gk-stat-row">
+    <span className="gk-stat">Spring Boot Backend</span>
+    <span className="gk-stat">Vanilla JS Frontend</span>
+    <span className="gk-stat">GitHub Actions CI/CD</span>
+    <span className="gk-stat">Live on GitHub Pages</span>
+  </div>
   <div className="gk-cta-grid">
     <a className="gk-cta" href="https://gotokart.github.io/frontend/#" target="_blank" rel="noreferrer">
       <span className="gk-kicker">Live</span>
-      <span className="gk-title">Open Storefront</span>
+      <span className="gk-title">GoToKart Live Store</span>
     </a>
     <a className="gk-cta" href="backend/" rel="noreferrer">
       <span className="gk-kicker">API</span>
@@ -19,6 +26,15 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
       <span className="gk-title">Commit Activity</span>
     </a>
   </div>
+</div>
+
+## Platform links
+
+<div className="gk-link-row">
+  <a href="https://gotokart.github.io/frontend/#" target="_blank" rel="noreferrer">Live Frontend</a>
+  <a href="https://github.com/gotokart/docs" target="_blank" rel="noreferrer">Docs Repository</a>
+  <a href="https://github.com/gotokart/backend" target="_blank" rel="noreferrer">Backend Repository</a>
+  <a href="https://github.com/gotokart" target="_blank" rel="noreferrer">GitHub Organization</a>
 </div>
 
 ## Repositories
@@ -48,6 +64,10 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
 
 ## High-level architecture
 
+<div className="gk-arch-note">
+  Request flow: Browser loads storefront, storefront calls backend APIs, backend persists data in MySQL.
+</div>
+
 ```mermaid
 flowchart LR
   Browser[Browser] --> Pages[Frontend - GitHub Pages]
@@ -59,8 +79,25 @@ flowchart LR
 
 ## Where to go next
 
-- **Getting started** — clone repos and run locally
-- **Backend API** — clickable endpoint guide with examples and usage notes
-- **Frontend** — structure and API usage
-- **Infrastructure** — domains and deployment flow
-- **Commit activity** — timeline + full list of docs commits (generated from git)
+<div className="gk-next-grid">
+  <a className="gk-next-card" href="getting-started/">
+    <strong>Getting started</strong>
+    <span>Clone repos and run everything locally.</span>
+  </a>
+  <a className="gk-next-card" href="backend/">
+    <strong>Backend API</strong>
+    <span>Endpoint reference with examples and usage tips.</span>
+  </a>
+  <a className="gk-next-card" href="frontend/">
+    <strong>Frontend</strong>
+    <span>UI structure, integration points, and behavior notes.</span>
+  </a>
+  <a className="gk-next-card" href="infrastructure/">
+    <strong>Infrastructure</strong>
+    <span>Domains, CI/CD, deployment map, and runtime flow.</span>
+  </a>
+  <a className="gk-next-card" href="activity/">
+    <strong>Commit activity</strong>
+    <span>Timeline and full commit list generated from git history.</span>
+  </a>
+</div>
