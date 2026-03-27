@@ -28,16 +28,7 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
   </div>
 </div>
 
-## Platform links
-
-<div className="gk-link-row">
-  <a href="https://gotokart.github.io/frontend/#" target="_blank" rel="noreferrer">Live Frontend</a>
-  <a href="https://github.com/gotokart/docs" target="_blank" rel="noreferrer">Docs Repository</a>
-  <a href="https://github.com/gotokart/backend" target="_blank" rel="noreferrer">Backend Repository</a>
-  <a href="https://github.com/gotokart" target="_blank" rel="noreferrer">GitHub Organization</a>
-</div>
-
-## Repositories
+## Repositories in organization
 
 <div className="gk-repo-grid">
   <div className="gk-repo-card">
@@ -60,60 +51,26 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
     <p>Shared CI/CD workflows used to build and deploy services/docs.</p>
     <a href="https://github.com/gotokart/.github" target="_blank" rel="noreferrer">Open repository →</a>
   </div>
+  <div className="gk-repo-card">
+    <strong>docs</strong>
+    <p>Project documentation site with architecture, API guides, and activity timeline.</p>
+    <a href="https://github.com/gotokart/docs" target="_blank" rel="noreferrer">Open repository →</a>
+  </div>
 </div>
 
 ## High-level architecture
 
-<div className="gk-arch-note">
-  Request flow: Browser loads storefront, storefront calls backend APIs, backend persists data in MySQL.
+<p className="gk-arch-note">
+  Single source architecture diagram (runtime and deployment flow):
+</p>
+
+<div className="gk-arch-figure-wrap">
+  <img
+    src="/assets/gotokart-architecture.svg"
+    alt="GoToKart high-level architecture diagram"
+    className="gk-arch-figure"
+  />
 </div>
-
-<div className="gk-arch-grid">
-  <div className="gk-arch-card">
-    <strong>1) Presentation layer</strong>
-    <span>Static storefront hosted on GitHub Pages serves UI, filters, cart, and order flow.</span>
-  </div>
-  <div className="gk-arch-card">
-    <strong>2) API layer</strong>
-    <span>Spring Boot backend exposes `/api/users`, `/api/products`, `/api/cart`, and `/api/orders`.</span>
-  </div>
-  <div className="gk-arch-card">
-    <strong>3) Data layer</strong>
-    <span>MySQL stores users, products, cart items, orders, and order item snapshots.</span>
-  </div>
-  <div className="gk-arch-card">
-    <strong>4) Delivery layer</strong>
-    <span>GitHub Actions builds docs and deploys updates to GitHub Pages automatically.</span>
-  </div>
-</div>
-
-```mermaid
-flowchart TD
-  User[User Browser] --> Domain[gotokart.github.io/frontend]
-  Domain --> Frontend[Frontend App]
-  Frontend -->|REST Calls| API[Spring Boot API]
-  API -->|JPA/Hibernate| MySQL[(MySQL Database)]
-
-  Dev[Developer Push] --> GH[GitHub Repositories]
-  GH --> Actions[GitHub Actions]
-  Actions --> DocsDeploy[Deploy Docs to GitHub Pages]
-  Actions --> FrontendDeploy[Deploy Frontend to GitHub Pages]
-
-  subgraph Runtime
-    Domain
-    Frontend
-    API
-    MySQL
-  end
-
-  subgraph Delivery
-    Dev
-    GH
-    Actions
-    DocsDeploy
-    FrontendDeploy
-  end
-```
 
 ## Where to go next
 
