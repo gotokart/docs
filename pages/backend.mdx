@@ -6,9 +6,13 @@ GoToKart backend is a **Spring Boot** application exposing REST APIs for users, 
 
 - Java 21 · Spring Boot 3.x · Spring Data JPA · Maven
 
-## Main endpoints (summary)
+## Base URL
 
-### Users
+`http://localhost:8080/api`
+
+For deployed environment, replace host with your production API domain.
+
+## Main endpoints (summary)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -40,6 +44,153 @@ GoToKart backend is a **Spring Boot** application exposing REST APIs for users, 
 |--------|------|-------------|
 | `POST` | `/api/orders/{userId}/place` | Place order (clears cart, updates stock) |
 | `GET` | `/api/orders/{userId}` | Order history |
+
+## Endpoint guide (click to expand)
+
+### Users
+
+<details>
+<summary><strong>POST</strong> <code>/api/users/register</code> — create user account</summary>
+
+**Use when:** onboarding a new user from signup form.
+
+**Request body**
+
+```json
+{
+  "name": "Ankit Pandey",
+  "email": "ankit@gotokart.com",
+  "password": "secret123"
+}
+```
+
+**Helpful note**
+
+- Validate unique email before calling this endpoint to avoid duplicate user errors in UI flow.
+</details>
+
+<details>
+<summary><strong>GET</strong> <code>/api/users</code> — fetch all users</summary>
+
+**Use when:** admin views or diagnostics.
+
+**Example response**
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Ankit Pandey",
+    "email": "ankit@gotokart.com"
+  }
+]
+```
+</details>
+
+### Products
+
+<details>
+<summary><strong>GET</strong> <code>/api/products</code> — list products</summary>
+
+**Use when:** loading the shop grid.
+
+**Helpful note**
+
+- Call once at page load and re-fetch after add/update/delete actions to keep UI state consistent.
+</details>
+
+<details>
+<summary><strong>POST</strong> <code>/api/products</code> — create or merge stock</summary>
+
+**Use when:** adding products from catalog form.
+
+**Request body**
+
+```json
+{
+  "name": "iPhone 15",
+  "description": "Apple iPhone 15 128GB",
+  "price": 79999.0,
+  "stock": 50
+}
+```
+
+**Helpful note**
+
+- If a product with same name already exists, backend merges/increases stock instead of creating duplicate rows.
+</details>
+
+<details>
+<summary><strong>DELETE</strong> <code>/api/products/&#123;id&#125;</code> — remove product</summary>
+
+**Use when:** product is discontinued or entered by mistake.
+
+**Helpful note**
+
+- Ask for explicit confirmation in frontend before delete to avoid accidental catalog loss.
+</details>
+
+### Cart
+
+<details>
+<summary><strong>POST</strong> <code>/api/cart/&#123;userId&#125;/add?productId=&quantity=</code> — add to cart</summary>
+
+**Use when:** user clicks add-to-cart button.
+
+**Example**
+
+```text
+/api/cart/1/add?productId=2&quantity=3
+```
+
+**Helpful note**
+
+- Clamp quantity on UI side so users cannot request invalid values (0 or negative).
+</details>
+
+<details>
+<summary><strong>DELETE</strong> <code>/api/cart/&#123;userId&#125;/remove?productId=</code> — remove from cart</summary>
+
+**Use when:** user removes cart line item.
+
+**Example**
+
+```text
+/api/cart/1/remove?productId=2
+```
+</details>
+
+### Orders
+
+<details>
+<summary><strong>POST</strong> <code>/api/orders/&#123;userId&#125;/place</code> — place order</summary>
+
+**Use when:** checkout button is clicked.
+
+**Example response**
+
+```json
+{
+  "id": 11,
+  "status": "PLACED",
+  "totalAmount": 84999.0
+}
+```
+
+**Helpful note**
+
+- On success, immediately refresh cart and orders sections in frontend so user sees updated state.
+</details>
+
+<details>
+<summary><strong>GET</strong> <code>/api/orders/&#123;userId&#125;</code> — list order history</summary>
+
+**Use when:** user opens orders page.
+
+**Helpful note**
+
+- Show newest first and allow expanding each order for line-item details to improve readability.
+</details>
 
 ## Database
 

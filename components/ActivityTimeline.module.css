@@ -14,6 +14,24 @@
   gap: 2rem;
 }
 
+.actions {
+  margin-bottom: 1rem;
+}
+
+.fullHistory {
+  display: inline-block;
+  text-decoration: none;
+  font-weight: 600;
+  color: #f5a623;
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+}
+
+.fullHistory:hover {
+  background: rgba(245, 166, 35, 0.12);
+}
+
 .dayBlock {
   position: relative;
   padding-left: 0.5rem;
@@ -121,6 +139,27 @@
 
 .githubLink:hover {
   text-decoration: underline;
+}
+
+.fullListWrap {
+  margin-top: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.fullListSummary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #ffb84d;
+}
+
+.fullList {
+  margin: 0.8rem 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
 }
 
 .empty {
