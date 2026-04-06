@@ -8,9 +8,10 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
   <p>Everything you need for API understanding, deployment flow, and docs activity in one place.</p>
   <div className="gk-stat-row">
     <span className="gk-stat">Spring Boot Backend</span>
+    <span className="gk-stat">JWT Authentication</span>
     <span className="gk-stat">Vanilla JS Frontend</span>
     <span className="gk-stat">GitHub Actions CI/CD</span>
-    <span className="gk-stat">Live on GitHub Pages</span>
+    <span className="gk-stat">102 Products Seeded</span>
   </div>
   <div className="gk-cta-grid">
     <a className="gk-cta" href="https://gotokart.github.io/frontend/#" target="_blank" rel="noreferrer">
@@ -67,8 +68,9 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
 ```mermaid
 flowchart TB
   U[Users] --> FE[Frontend UI<br/>GitHub Pages]
-  FE -->|REST API calls| BE[Backend API<br/>Spring Boot]
-  BE -->|JPA/Hibernate| DB[(MySQL)]
+  FE -->|JWT Auth + REST| BE[Backend API<br/>Spring Boot]
+  BE -->|JPA/Hibernate| DB[(MySQL 8)]
+  BE -->|BCrypt + JJWT| Auth[Spring Security<br/>JWT Filter]
 
   Dev[Developer] --> RepoFE[github.com/gotokart/frontend]
   Dev --> RepoBE[github.com/gotokart/backend]
@@ -78,13 +80,13 @@ flowchart TB
   RepoFE --> CI[GitHub Actions / CI-CD]
   RepoDocs --> CI
   RepoInfra --> CI
-  RepoBE --> RailwayDeploy[Railway Auto Deploy]
+  RepoBE --> EC2Deploy[SSM Send-Command<br/>EC2 Deploy]
 
   CI --> FE
   CI --> Docs[Docs Site<br/>GitHub Pages]
   FE --> DomainFE[gotokart.github.io/frontend]
   Docs --> DomainDocs[gotokart.github.io/docs]
-  RailwayDeploy --> DomainAPI[api.gotokart.in]
+  EC2Deploy --> DomainAPI[EC2 / localhost:8080]
 ```
 
 ## Where to go next

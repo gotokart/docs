@@ -1,20 +1,21 @@
 # Backend API
 
-GoToKart backend is a **Spring Boot** application exposing REST APIs for users, products, shopping cart, and orders, backed by **MySQL**.
+GoToKart backend is a **Spring Boot** application exposing REST APIs for authentication, users, products, shopping cart, and orders, backed by **MySQL** and secured with **JWT**.
 
 ## Stack
 
-- Java 21 · Spring Boot 3.x · Spring Data JPA · Maven
+- Java 21 · Spring Boot 3.x · Spring Security · Spring Data JPA · JJWT 0.11.5 · BCrypt · Maven
 
 ## Base URL
 
 `http://localhost:8080/api`
 
-For deployed environment, replace host with your production API domain.
+For deployed environments, replace the host with your production API domain.
 
 ## Quick jump
 
 <div className="gk-chip-row">
+  <a className="gk-chip" href="#auth">Auth</a>
   <a className="gk-chip" href="#users">Users</a>
   <a className="gk-chip" href="#products">Products</a>
   <a className="gk-chip" href="#cart">Cart</a>
@@ -24,63 +25,82 @@ For deployed environment, replace host with your production API domain.
 ## Featured endpoints
 
 <div className="gk-api-card">
-  <span className="gk-method gk-post">POST</span><code>/api/users/register</code>
-  <p className="gk-api-meta">Use case: signup flow · Auth: no · Typical response: created user profile.</p>
+  <span className="gk-method gk-post">POST</span><code>/api/auth/login</code>
+  <p className="gk-api-meta">Use case: user login · Auth: no · Returns JWT token + user profile.</p>
+</div>
+<div className="gk-api-card">
+  <span className="gk-method gk-post">POST</span><code>/api/auth/register</code>
+  <p className="gk-api-meta">Use case: new user signup · Auth: no · Returns JWT token + user profile.</p>
 </div>
 <div className="gk-api-card">
   <span className="gk-method gk-get">GET</span><code>/api/products</code>
-  <p className="gk-api-meta">Use case: storefront listing · Auth: no · Use this as your product source of truth.</p>
+  <p className="gk-api-meta">Use case: storefront listing · Auth: no · Returns all 102+ seeded products.</p>
 </div>
 <div className="gk-api-card">
   <span className="gk-method gk-post">POST</span><code>/api/orders/&#123;userId&#125;/place</code>
   <p className="gk-api-meta">Use case: checkout · Auth: user context · Triggers stock update + cart clear.</p>
 </div>
 
-## Main endpoints (summary)
+---
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/users/register` | Register a user |
-| `GET` | `/api/users` | List users |
-| `GET` | `/api/users/{id}` | Get user by id |
+<a id="auth"></a>
+## Authentication
 
-<a id="products"></a>
-### Products
+GoToKart uses **JWT** tokens. Passwords are hashed with BCrypt.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/products` | List products |
-| `GET` | `/api/products/{id}` | Get product |
-| `POST` | `/api/products` | Create (merges stock if name exists) |
-| `PUT` | `/api/products/{id}` | Update |
-| `DELETE` | `/api/products/{id}` | Delete |
+### Default admin credentials
 
-<a id="cart"></a>
-### Cart
+| Field | Value |
+|-------|-------|
+| Email | `admin@gotokart.com` |
+| Password | `admin123` |
+| Role | `ADMIN` |
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/cart/{userId}` | Cart for user |
-| `POST` | `/api/cart/{userId}/add?productId=&quantity=` | Add item |
-| `DELETE` | `/api/cart/{userId}/remove?productId=` | Remove item |
+The admin account is created automatically on backend startup if it does not exist.
 
-<a id="orders"></a>
-### Orders
+### Using JWT in requests
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/orders/{userId}/place` | Place order (clears cart, updates stock) |
-| `GET` | `/api/orders/{userId}` | Order history |
+After login, include the token in every admin request:
 
-## Endpoint guide (click to expand)
+```
+Authorization: Bearer <your-jwt-token>
+```
 
-<a id="users"></a>
-### Users
+### Auth endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|:---:|-------------|
+| `POST` | `/api/auth/login` | No | Login, returns JWT |
+| `POST` | `/api/auth/register` | No | Register, returns JWT |
+| `GET` | `/api/users/me` | JWT | Get current user profile |
 
 <details>
-<summary><strong>POST</strong> <code>/api/users/register</code> — create user account</summary>
+<summary><strong>POST</strong> <code>/api/auth/login</code> — login</summary>
 
-**Use when:** onboarding a new user from signup form.
+**Request body**
+
+```json
+{
+  "email": "admin@gotokart.com",
+  "password": "admin123"
+}
+```
+
+**Response**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "id": 1,
+  "name": "Admin",
+  "email": "admin@gotokart.com",
+  "role": "ADMIN"
+}
+```
+</details>
+
+<details>
+<summary><strong>POST</strong> <code>/api/auth/register</code> — register new user</summary>
 
 **Request body**
 
@@ -92,45 +112,42 @@ For deployed environment, replace host with your production API domain.
 }
 ```
 
-**Helpful note**
-
-- Validate unique email before calling this endpoint to avoid duplicate user errors in UI flow.
+**Response** — same shape as login response, with `role: "USER"`.
 </details>
 
+---
+
+<a id="users"></a>
+## Users
+
+| Method | Path | Auth | Description |
+|--------|------|:---:|-------------|
+| `GET` | `/api/users/me` | JWT | Get own profile |
+| `GET` | `/api/users` | No | List all users |
+| `GET` | `/api/users/{id}` | No | Get user by ID |
+
+---
+
+<a id="products"></a>
+## Products
+
+| Method | Path | Auth | Description |
+|--------|------|:---:|-------------|
+| `GET` | `/api/products` | No | List all products |
+| `GET` | `/api/products/{id}` | No | Get product by ID |
+| `POST` | `/api/products` | ADMIN JWT | Create product (merges stock if name exists) |
+| `PUT` | `/api/products/{id}` | ADMIN JWT | Update product |
+| `DELETE` | `/api/products/{id}` | ADMIN JWT | Delete product |
+
 <details>
-<summary><strong>GET</strong> <code>/api/users</code> — fetch all users</summary>
+<summary><strong>POST</strong> <code>/api/products</code> — create product</summary>
 
-**Use when:** admin views or diagnostics.
+**Request headers**
 
-**Example response**
-
-```json
-[
-  {
-    "id": 1,
-    "name": "Ankit Pandey",
-    "email": "ankit@gotokart.com"
-  }
-]
 ```
-</details>
-
-### Products
-
-<details>
-<summary><strong>GET</strong> <code>/api/products</code> — list products</summary>
-
-**Use when:** loading the shop grid.
-
-**Helpful note**
-
-- Call once at page load and re-fetch after add/update/delete actions to keep UI state consistent.
-</details>
-
-<details>
-<summary><strong>POST</strong> <code>/api/products</code> — create or merge stock</summary>
-
-**Use when:** adding products from catalog form.
+Authorization: Bearer <admin-jwt-token>
+Content-Type: application/json
+```
 
 **Request body**
 
@@ -139,31 +156,44 @@ For deployed environment, replace host with your production API domain.
   "name": "iPhone 15",
   "description": "Apple iPhone 15 128GB",
   "price": 79999.0,
-  "stock": 50
+  "stock": 50,
+  "category": { "id": 1 }
 }
 ```
 
 **Helpful note**
 
-- If a product with same name already exists, backend merges/increases stock instead of creating duplicate rows.
+- If a product with the same name already exists, backend merges/increases stock instead of creating a duplicate row.
+- Returns `403 Forbidden` if the `Authorization` header is missing or the user is not `ADMIN`.
 </details>
 
 <details>
 <summary><strong>DELETE</strong> <code>/api/products/&#123;id&#125;</code> — remove product</summary>
 
-**Use when:** product is discontinued or entered by mistake.
+**Request headers**
+
+```
+Authorization: Bearer <admin-jwt-token>
+```
 
 **Helpful note**
 
-- Ask for explicit confirmation in frontend before delete to avoid accidental catalog loss.
+- Ask for explicit confirmation in frontend before calling delete.
 </details>
 
-### Cart
+---
+
+<a id="cart"></a>
+## Cart
+
+| Method | Path | Auth | Description |
+|--------|------|:---:|-------------|
+| `GET` | `/api/cart/{userId}` | No | Cart for user |
+| `POST` | `/api/cart/{userId}/add?productId=&quantity=` | No | Add item |
+| `DELETE` | `/api/cart/{userId}/remove?productId=` | No | Remove item |
 
 <details>
-<summary><strong>POST</strong> <code>/api/cart/&#123;userId&#125;/add?productId=&quantity=</code> — add to cart</summary>
-
-**Use when:** user clicks add-to-cart button.
+<summary><strong>POST</strong> <code>/api/cart/&#123;userId&#125;/add?productId=&amp;quantity=</code> — add to cart</summary>
 
 **Example**
 
@@ -173,27 +203,21 @@ For deployed environment, replace host with your production API domain.
 
 **Helpful note**
 
-- Clamp quantity on UI side so users cannot request invalid values (0 or negative).
+- Clamp quantity on the UI side so users cannot submit 0 or negative values.
 </details>
 
-<details>
-<summary><strong>DELETE</strong> <code>/api/cart/&#123;userId&#125;/remove?productId=</code> — remove from cart</summary>
+---
 
-**Use when:** user removes cart line item.
+<a id="orders"></a>
+## Orders
 
-**Example**
-
-```text
-/api/cart/1/remove?productId=2
-```
-</details>
-
-### Orders
+| Method | Path | Auth | Description |
+|--------|------|:---:|-------------|
+| `POST` | `/api/orders/{userId}/place` | No | Place order (clears cart, updates stock) |
+| `GET` | `/api/orders/{userId}` | No | Order history |
 
 <details>
 <summary><strong>POST</strong> <code>/api/orders/&#123;userId&#125;/place</code> — place order</summary>
-
-**Use when:** checkout button is clicked.
 
 **Example response**
 
@@ -207,19 +231,13 @@ For deployed environment, replace host with your production API domain.
 
 **Helpful note**
 
-- On success, immediately refresh cart and orders sections in frontend so user sees updated state.
+- On success, immediately refresh cart and orders sections so user sees the updated state.
 </details>
 
-<details>
-<summary><strong>GET</strong> <code>/api/orders/&#123;userId&#125;</code> — list order history</summary>
-
-**Use when:** user opens orders page.
-
-**Helpful note**
-
-- Show newest first and allow expanding each order for line-item details to improve readability.
-</details>
+---
 
 ## Database
 
-Create a database (example name `gotokartDB`) and configure JDBC URL, user, and password in `application.properties`. See the [backend README](https://github.com/gotokart/backend/blob/main/README.md) for full examples and troubleshooting.
+Create a database named `gotokart` and configure JDBC URL, user, and password in `application.properties`. See the [Getting started](getting-started) guide for full examples.
+
+On first startup, the backend automatically seeds **102 products** across 11 categories and creates the admin user.

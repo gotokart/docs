@@ -1,22 +1,44 @@
 # Frontend
 
-The storefront is a **single-page** experience built with **HTML, CSS, and JavaScript** (no framework). It talks to the backend REST API.
+The storefront is a **single-page** experience built with **HTML, CSS, and JavaScript** (no framework). It talks to the backend REST API using **JWT authentication**.
 
 ## Files
 
-- `index.html` — layout and sections (hero, auth, shop, cart, orders)
+- `index.html` — layout and sections (hero, auth, shop, cart, orders, admin panel)
 - `style.css` — dark luxury theme (gold accents, responsive layout)
-- `script.js` — API calls, UI state, and rendering
+- `script.js` — API calls, JWT auth, UI state, and rendering
 
 ## API base URL
 
-The client uses a single constant for the API root (typically `http://localhost:8080/api` in development). Change it in `script.js` to point at your deployed API.
+```javascript
+// script.js — top of file
+const API = 'http://localhost:8080/api';
+```
+
+Change this one constant to point at your deployed API.
+
+## Authentication
+
+The frontend uses **JWT tokens** stored in `localStorage` (`gk_token`).
+
+- `POST /api/auth/login` — login, receives JWT
+- `POST /api/auth/register` — register, receives JWT
+- `GET /api/users/me` — fetch own profile after login
+- Session is automatically restored from `localStorage` on page reload
+- All admin requests include `Authorization: Bearer <token>` via `authHeaders()`
+
+**Default admin account:**
+- Email: `admin@gotokart.com`
+- Password: `admin123`
 
 ## Features (overview)
 
-- Register / login / logout
-- Product listing with search, filters, and sorting
-- Cart with quantity and totals
-- Place order and view order history
+- Register / login / logout with JWT session persistence
+- Admin panel visible only to users with `ADMIN` role
+- Product listing with search, filters, sorting, and category tags
+- Auto emoji detection for 150+ product types
+- Admin-only: add product (with category dropdown) and delete product
+- Cart with quantity stepper and real-time totals
+- Place order and view order history with expandable details
 
-For details and customization, see the [frontend README](https://github.com/gotokart/frontend/blob/main/README.md).
+For full details, see the [frontend README](https://github.com/gotokart/frontend/blob/main/README.md).

@@ -1,24 +1,70 @@
 # Infrastructure
 
-Deployment layout for GoToKart (as described in the [infra repo](https://github.com/gotokart/infra)).
+Deployment layout for GoToKart (see the [infra repo](https://github.com/gotokart/infra) for the full source of truth).
 
 ## Topology
 
 | Piece | Hosting | Notes |
 |-------|---------|--------|
-| Frontend | GitHub Pages | Static site |
-| Backend API | Railway | Spring Boot service |
-| Database | Railway MySQL | Managed MySQL |
-| CI/CD | `.github` repo | Shared workflows |
+| Frontend | GitHub Pages | Static site, deployed via CI |
+| Backend API | EC2 / local | Spring Boot, port 8080 |
+| Database | MySQL 8 | Local container or external managed MySQL |
+| Nginx | Docker container | Serves frontend + proxies `/api/` to backend |
+| CI/CD | GitHub Actions | SSM-based EC2 deploy, Pages publish |
 
-## Domains (example)
+---
 
-- **Site:** `gotokart.in` (frontend)
-- **API:** `api.gotokart.in` (backend API)
+## Local development
 
-## Flow
+### Quickstart with Docker
 
-1. Push to `frontend` → pipeline builds / publishes to GitHub Pages.
-2. Push to `backend` → Railway deploys the API.
+```bash
+cd infra
+docker compose -f docker-compose.local.yml up --build
+```
 
-Exact scripts and workflow files live in `infra` and `gotokart/.github` — check those repos for the current source of truth.
+Opens the full stack at `http://localhost`:
+- **Nginx** → port 80 (frontend + API proxy)
+- **Backend** → port 8080
+- **MySQL** → port 3306
+
+### Local credentials
+
+| Service | Value |
+|---------|-------|
+| DB name | `gotokart` |
+| DB user | `root` |
+| DB password | `Root@1234` |
+| Admin email | `admin@gotokart.com` |
+| Admin password | `admin123` |
+
+---
+
+## Nginx routing
+
+```
+/       → static frontend files (index.html)
+/api/*  → http://backend:8080/api/   (Docker service name)
+```
+
+---
+
+## CI/CD flow
+
+1. Push to `frontend/main` → GitHub Actions pipeline → GitHub Pages
+2. Push to `backend/main` → GitHub Actions sends `aws ssm send-command` to EC2 → pulls code, rebuilds Docker containers
+3. Push to `docs/main` → GitHub Actions pipeline → GitHub Pages (docs site)
+
+---
+
+## EC2 production deploy
+
+For EC2, use the production compose file with an external MySQL:
+
+```bash
+cp .env.example .env
+# Fill in SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD
+docker compose up --build -d
+```
+
+Exact scripts and workflow files live in `infra/` and the GitHub Actions workflows — check those repos for the current source of truth.
