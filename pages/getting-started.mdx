@@ -1,5 +1,13 @@
 # Getting started
 
+## Live site
+
+The app is already deployed and running at **`http://34.227.190.40`** — open it directly to use GoToKart without any local setup.
+
+Default admin login: `admin@gotokart.com` / `admin123`
+
+---
+
 ## Clone the repositories
 
 ```bash
@@ -9,39 +17,31 @@ git clone https://github.com/gotokart/infra.git
 git clone https://github.com/gotokart/docs.git
 ```
 
-## Prerequisites
-
-- **Backend:** Java 21, Maven 3.9+, MySQL 8+
-- **Frontend:** modern browser; backend running locally
-- **Docs (this site):** Node.js 18+, npm (or pnpm/yarn)
-
 ---
 
-## Option A — Run with Docker (recommended)
+## Run locally
 
-The simplest way to run everything locally is via Docker Compose from the `infra` repo:
+### Option A — Docker (recommended)
+
+Requires Docker Desktop installed.
 
 ```bash
 cd infra
 docker compose -f docker-compose.local.yml up --build
 ```
 
-This starts **MySQL**, the **Spring Boot backend**, and **Nginx** (which serves the frontend at `http://localhost`).
+This starts MariaDB, Spring Boot backend, and Nginx. Open `http://localhost`.
 
----
+### Option B — Backend directly (no Docker)
 
-## Option B — Run backend directly
+Prerequisites: Java 21, Maven 3.9+, MySQL or MariaDB running locally.
 
-### 1. Set up MySQL database
-
+**1. Create the database:**
 ```sql
 CREATE DATABASE gotokart;
 ```
 
-### 2. Configure `application.properties`
-
-Edit `backend/src/main/resources/application.properties`:
-
+**2. Configure `backend/src/main/resources/application.properties`:**
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/gotokart?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 spring.datasource.username=root
@@ -51,24 +51,21 @@ jwt.secret=GoToKartSuperSecretJwtKey2026!!VeryLongAndSecure@#$%
 jwt.expiry-ms=86400000
 ```
 
-### 3. Start the backend
-
+**3. Start the backend:**
 ```bash
 cd backend
 mvn clean spring-boot:run
 ```
 
-API base URL: `http://localhost:8080`
+**4. Open the frontend:**
 
-### 4. Open the frontend
-
-Open `frontend/index.html` directly in your browser. The UI calls `http://localhost:8080/api` by default (configured in `script.js`).
+Open `frontend/index.html` directly in your browser. It auto-detects local mode and calls `http://localhost:8080/api`.
 
 ---
 
 ## Default admin account
 
-On first startup, the backend automatically seeds **102 products** and creates an admin user:
+Created automatically on first backend startup:
 
 | Field | Value |
 |-------|-------|
@@ -76,16 +73,16 @@ On first startup, the backend automatically seeds **102 products** and creates a
 | Password | `admin123` |
 | Role | `ADMIN` |
 
-Log in with these credentials to access the admin panel (add/delete products).
+On first startup the backend also seeds **102 products** across 11 categories.
 
 ---
 
 ## How authentication works
 
 1. Click **Login** → enter email and password
-2. The frontend calls `POST /api/auth/login` and receives a JWT token
-3. The token is saved to `localStorage` and sent as `Authorization: Bearer <token>` on admin requests
-4. Your session is automatically restored on page reload
+2. Frontend calls `POST /api/auth/login` → receives JWT token
+3. Token saved to `localStorage`, sent as `Authorization: Bearer <token>` on admin requests
+4. Session restored automatically on page reload
 
 ---
 
@@ -97,4 +94,4 @@ npm install
 npm run dev
 ```
 
-Then open `http://localhost:3000` (or the URL printed in the terminal).
+Open `http://localhost:3000`.
