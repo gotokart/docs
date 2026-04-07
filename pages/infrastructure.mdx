@@ -4,27 +4,34 @@ Full deployment reference for GoToKart on AWS EC2. See the [infra repo](https://
 
 ## Live deployment
 
-| | |
-|-|-|
+| Field | Value |
+|-------|-------|
 | **URL** | `http://34.227.190.40` |
-| **Server** | AWS EC2 — Amazon Linux 2023 |
-| **Region** | us-east-1 |
+| **Instance name** | `gotokart-server` |
+| **Instance ID** | `i-06d8c2e118aee4985` |
+| **Instance type** | `m7i-flex.large` (2 vCPUs) |
+| **AMI** | Amazon Linux 2023 — kernel 6.1 (`al2023-ami-2023.10.20260330.0`) |
+| **Availability Zone** | `us-east-1c` |
+| **Public IPv4** | `34.227.190.40` |
+| **Public DNS** | `ec2-34-227-190-40.compute-1.amazonaws.com` |
+| **Private IP** | `172.31.21.128` |
+| **Key pair** | `gotokart-server-key` |
+| **Security group** | `launch-wizard-6` |
+| **VPC** | `vpc-0f3b682faa9b16f81` |
+| **Subnet** | `subnet-02ac3f55e7d3b8c66` |
+| **Launch time** | 2026-04-07 22:28 IST |
 
 ## Architecture
 
 ```
-Browser → http://34.227.190.40
-               │
-         Nginx :80  (Docker container)
-          ├── /          → frontend static files
-          └── /api/*     → http://backend:8080
-               │
-         Spring Boot :8080  (Docker container)
-               │
-         MariaDB 10.11 :3306  (Docker container)
+Browser  ──HTTP──▶  EC2 :80 (Nginx container)
+                        │
+                   /api/* ──proxy_pass──▶  backend:8080 (Spring Boot container)
+                   /       ──static files         │
+                                                   └──JPA──▶  mariadb:3306 (MariaDB container)
 ```
 
-All three services run as Docker containers on a single EC2 instance, connected via a Docker bridge network (`gotokart-net`). Nginx is the only container exposed to the internet (port 80).
+All three services run as Docker containers on a single EC2 instance, connected via a Docker bridge network (`gotokart-net`). Nginx is the only container with a public port (80).
 
 ---
 
