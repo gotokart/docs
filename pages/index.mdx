@@ -67,22 +67,44 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
 </p>
 
 ```mermaid
-flowchart LR
-  U[👤 User] -->|HTTP| EC2
-
-  subgraph EC2["AWS EC2  ·  34.227.190.40  ·  m7i-flex.large"]
-    NG[Nginx :80] -->|proxy /api/*| BE[Spring Boot :8080]
-    BE -->|JPA| DB[(MariaDB :3306)]
+flowchart TB
+  subgraph CL[" Client "]
+    U["👤 User\nbrowser / mobile"]
+    DEV["👨‍💻 Dev\nlocal machine"]
   end
 
-  subgraph GH[GitHub — gotokart]
-    direction TB
-    FE[frontend] & BE2[backend] & INF[infra] & DOC[docs]
+  subgraph GH[" Source — GitHub · gotokart org "]
+    FE["frontend\nHTML / CSS / JS"]
+    BE["backend\nSpring Boot"]
+    INF["infra\nDocker · SSM"]
+    DOC["docs\nNextra / MDX"]
   end
 
-  Dev[👨‍💻 Dev] --> GH
-  INF -->|push → GitHub Actions SSM| EC2
-  DOC -->|push → GitHub Actions| Pages[GitHub Pages\ndocs site]
+  subgraph RT[" Runtime — AWS EC2 · m7i-flex.large · 34.227.190.40 "]
+    subgraph CI["GitHub Actions  CI/CD"]
+      BUILD["build & test"]
+      DEPLOY["deploy job"]
+    end
+    subgraph EC2["Docker containers on EC2"]
+      NG["Nginx  :80\nreverse proxy"]
+      SB["Spring Boot  :8080\nREST API · JWT · BCrypt"]
+      DB[("MariaDB  :3306\npersistent store")]
+    end
+    BUILD --> DEPLOY
+    DEPLOY -->|"docker compose up --build"| NG
+    NG -->|"proxy  /api/*"| SB
+    SB -->|"JPA / SQL"| DB
+  end
+
+  subgraph DT[" Deploy Targets "]
+    PAGES["GitHub Pages\ngotokart.github.io/docs"]
+  end
+
+  U -->|HTTP :80| NG
+  DEV -->|git push| GH
+  FE & BE -->|"push → Actions"| CI
+  INF -->|"push → SSM params"| CI
+  DOC -->|"push → Actions"| PAGES
 ```
 
 ## Where to go next

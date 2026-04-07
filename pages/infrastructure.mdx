@@ -13,19 +13,48 @@ Full deployment reference for GoToKart on AWS EC2. See the [infra repo](https://
 
 ## Architecture
 
-```
-User
- │
- ▼
-EC2 — 34.227.190.40
- └── Nginx :80          ← only public port
-      ├── /             → serves frontend (HTML/CSS/JS)
-      └── /api/*        → proxy → Spring Boot :8080
-                                       │
-                                  MariaDB :3306
+```mermaid
+flowchart TB
+  subgraph CL[" Client "]
+    U["👤 User\nbrowser / mobile"]
+    DEV["👨‍💻 Dev\nlocal machine"]
+  end
+
+  subgraph GH[" Source — GitHub · gotokart org "]
+    FE["frontend\nHTML / CSS / JS"]
+    BE["backend\nSpring Boot"]
+    INF["infra\nDocker · SSM"]
+    DOC["docs\nNextra / MDX"]
+  end
+
+  subgraph RT[" Runtime — AWS EC2 · m7i-flex.large · 34.227.190.40 "]
+    subgraph CI["GitHub Actions  CI/CD"]
+      BUILD["build & test"]
+      DEPLOY["deploy job"]
+    end
+    subgraph EC2["Docker containers on EC2"]
+      NG["Nginx  :80\nreverse proxy"]
+      SB["Spring Boot  :8080\nREST API · JWT · BCrypt"]
+      DB[("MariaDB  :3306\npersistent store")]
+    end
+    BUILD --> DEPLOY
+    DEPLOY -->|"docker compose up --build"| NG
+    NG -->|"proxy  /api/*"| SB
+    SB -->|"JPA / SQL"| DB
+  end
+
+  subgraph DT[" Deploy Targets "]
+    PAGES["GitHub Pages\ngotokart.github.io/docs"]
+  end
+
+  U -->|HTTP :80| NG
+  DEV -->|git push| GH
+  FE & BE -->|"push → Actions"| CI
+  INF -->|"push → SSM params"| CI
+  DOC -->|"push → Actions"| PAGES
 ```
 
-All three services are Docker containers on one EC2 instance, on the same internal bridge network (`gotokart-net`). Only Nginx is exposed to the internet.
+All three services run as Docker containers on a single EC2 instance, connected via internal bridge network (`gotokart-net`). Only Nginx is exposed to the internet on port 80.
 
 ---
 
