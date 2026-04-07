@@ -1,178 +1,191 @@
+// Accent palette (one per lane, used for borders, strips, and arrows only)
+// Client: violet · Source: emerald · CI/CD: orange · Runtime: blue · Deploy: gray
+
 export default function ArchitectureDiagram() {
+  // Shared node style — all nodes get the same dark fill; only border changes
+  const node = (accent: string) => ({
+    fill: '#161b22',
+    stroke: accent,
+    strokeWidth: 1.8,
+    rx: 8,
+  } as React.SVGProps<SVGRectElement>)
+
+  const labelPrimary = '#e6edf3'
+  const labelSecondary = '#8b949e'
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 1100 850"
+      viewBox="0 0 1100 840"
       width="100%"
       style={{ fontFamily: "'Segoe UI', Arial, sans-serif", borderRadius: 10 }}
     >
       <defs>
-        <marker id="ap" viewBox="0 0 8 6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#9B8EFF"/></marker>
-        <marker id="ar" viewBox="0 0 8 6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#F07450"/></marker>
-        <marker id="ab" viewBox="0 0 8 6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#5FA8F5"/></marker>
-        <marker id="ag" viewBox="0 0 8 6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#5AB870"/></marker>
-        <marker id="as" viewBox="0 0 8 6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#9B9890"/></marker>
-        <marker id="ao" viewBox="0 0 8 6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#E8A840"/></marker>
+        <marker id="mv" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#7c6fe0"/></marker>
+        <marker id="mo" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#e06b3a"/></marker>
+        <marker id="mb" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#3676c4"/></marker>
+        <marker id="mg" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#3a8c52"/></marker>
+        <marker id="ms" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#4a4a46"/></marker>
+        <marker id="ma" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#c48a1a"/></marker>
       </defs>
 
-      {/* ── Background ── */}
-      <rect width="1100" height="850" fill="#0d1117" rx="10"/>
+      {/* Background */}
+      <rect width="1100" height="840" fill="#0d1117" rx="10"/>
 
-      {/* ── Lane backgrounds ── */}
-      <rect x="0" y="12"  width="1100" height="96"  rx="6" fill="#120d2e" stroke="#3d3080" strokeWidth="1"/>
-      <rect x="0" y="110" width="1100" height="135" rx="6" fill="#071810" stroke="#145038" strokeWidth="1"/>
-      <rect x="0" y="247" width="1100" height="124" rx="6" fill="#1a0c06" stroke="#6a2a10" strokeWidth="1"/>
-      <rect x="0" y="373" width="1100" height="300" rx="6" fill="#060e1e" stroke="#0e3060" strokeWidth="1"/>
-      <rect x="0" y="675" width="1100" height="100" rx="6" fill="#111110" stroke="#3a3930" strokeWidth="1"/>
+      {/* ── Lane fills (very subtle) ── */}
+      <rect x="0" y="12"  width="1100" height="96"  rx="6" fill="#0f0e18" stroke="#2a2460" strokeWidth="1"/>
+      <rect x="0" y="110" width="1100" height="135" rx="6" fill="#0d1410" stroke="#143528" strokeWidth="1"/>
+      <rect x="0" y="247" width="1100" height="124" rx="6" fill="#140d07" stroke="#3a2010" strokeWidth="1"/>
+      <rect x="0" y="373" width="1100" height="300" rx="6" fill="#080e18" stroke="#102240" strokeWidth="1"/>
+      <rect x="0" y="675" width="1100" height="100" rx="6" fill="#0f0f0e" stroke="#2a2a28" strokeWidth="1"/>
 
-      {/* ── Lane label strips ── */}
-      <rect x="0" y="12"  width="36" height="96"  rx="5" fill="#2a1f60" stroke="#7F77DD" strokeWidth="1.5"/>
-      <text x="18" y="60"  textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,18,60)"  fontSize="10" fontWeight="bold" fill="#c4beff">client</text>
+      {/* ── Lane label strips (30px) ── */}
+      <rect x="0" y="12"  width="30" height="96"  rx="5" fill="#1a1630" stroke="#7c6fe0" strokeWidth="1.5"/>
+      <text x="15" y="60"  textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,60)"  fontSize="10" fontWeight="bold" fill="#7c6fe0">client</text>
 
-      <rect x="0" y="110" width="36" height="135" rx="5" fill="#0a3025" stroke="#1D9E75" strokeWidth="1.5"/>
-      <text x="18" y="177" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,18,177)" fontSize="10" fontWeight="bold" fill="#7de8c8">source (GitHub)</text>
+      <rect x="0" y="110" width="30" height="135" rx="5" fill="#0d2018" stroke="#2ea87e" strokeWidth="1.5"/>
+      <text x="15" y="177" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,177)" fontSize="10" fontWeight="bold" fill="#2ea87e">source (GitHub)</text>
 
-      <rect x="0" y="247" width="36" height="124" rx="5" fill="#3d1508" stroke="#D85A30" strokeWidth="1.5"/>
-      <text x="18" y="309" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,18,309)" fontSize="10" fontWeight="bold" fill="#f0997b">CI / CD</text>
+      <rect x="0" y="247" width="30" height="124" rx="5" fill="#1e1008" stroke="#e06b3a" strokeWidth="1.5"/>
+      <text x="15" y="309" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,309)" fontSize="10" fontWeight="bold" fill="#e06b3a">CI / CD</text>
 
-      <rect x="0" y="373" width="36" height="300" rx="5" fill="#082040" stroke="#185FA5" strokeWidth="1.5"/>
-      <text x="18" y="523" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,18,523)" fontSize="10" fontWeight="bold" fill="#b5d4f4">runtime (AWS EC2)</text>
+      <rect x="0" y="373" width="30" height="300" rx="5" fill="#081428" stroke="#3676c4" strokeWidth="1.5"/>
+      <text x="15" y="523" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,523)" fontSize="10" fontWeight="bold" fill="#3676c4">runtime (AWS EC2)</text>
 
-      <rect x="0" y="675" width="36" height="100" rx="5" fill="#252520" stroke="#888780" strokeWidth="1.5"/>
-      <text x="18" y="725" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,18,725)" fontSize="10" fontWeight="bold" fill="#c5c4be">deploy targets</text>
+      <rect x="0" y="675" width="30" height="100" rx="5" fill="#161614" stroke="#4a4a46" strokeWidth="1.5"/>
+      <text x="15" y="725" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,725)" fontSize="10" fontWeight="bold" fill="#4a4a46">deploy targets</text>
 
       {/* ── CLIENT nodes ── */}
-      <rect x="78" y="28" width="155" height="58" rx="9" fill="#2a1f60" stroke="#7F77DD" strokeWidth="2"/>
-      <text x="155" y="51" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#e0dcff">User</text>
-      <text x="155" y="71" textAnchor="middle" fontSize="10" fill="#9B8EFF">browser / mobile</text>
+      <rect x="72" y="28" {...node('#7c6fe0')} width="155" height="58"/>
+      <text x="149" y="51" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>User</text>
+      <text x="149" y="70" textAnchor="middle" fontSize="10" fill={labelSecondary}>browser / mobile</text>
 
-      <rect x="305" y="28" width="150" height="58" rx="9" fill="#2a2921" stroke="#888780" strokeWidth="2"/>
-      <text x="380" y="51" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#e0dfd8">Dev</text>
-      <text x="380" y="71" textAnchor="middle" fontSize="10" fill="#9B9890">local machine</text>
+      <rect x="298" y="28" {...node('#4a4a46')} width="150" height="58"/>
+      <text x="373" y="51" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>Dev</text>
+      <text x="373" y="70" textAnchor="middle" fontSize="10" fill={labelSecondary}>local machine</text>
 
       {/* ── SOURCE nodes ── */}
-      <rect x="50" y="124" width="890" height="110" rx="7" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeDasharray="7,4"/>
-      <text x="66" y="143" fontSize="10" fontWeight="bold" fill="#1D9E75">GitHub — gotokart org</text>
+      <rect x="48" y="124" width="900" height="110" rx="6" fill="none" stroke="#1e5e44" strokeWidth="1" strokeDasharray="6,4"/>
+      <text x="62" y="143" fontSize="10" fill="#2ea87e" fontWeight="bold">GitHub — gotokart org</text>
 
-      <rect x="68"  y="148" width="150" height="62" rx="9" fill="#0a3025" stroke="#1D9E75" strokeWidth="2"/>
-      <text x="143" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#a3f0d8">frontend</text>
-      <text x="143" y="191" textAnchor="middle" fontSize="10" fill="#5dc9a5">HTML / CSS / JS</text>
+      <rect x="66"  y="148" {...node('#2ea87e')} width="150" height="62"/>
+      <text x="141" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>frontend</text>
+      <text x="141" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>HTML / CSS / JS</text>
 
-      <rect x="245" y="148" width="150" height="62" rx="9" fill="#0a3025" stroke="#1D9E75" strokeWidth="2"/>
-      <text x="320" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#a3f0d8">backend</text>
-      <text x="320" y="191" textAnchor="middle" fontSize="10" fill="#5dc9a5">Spring Boot</text>
+      <rect x="242" y="148" {...node('#2ea87e')} width="150" height="62"/>
+      <text x="317" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>backend</text>
+      <text x="317" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>Spring Boot</text>
 
-      <rect x="422" y="148" width="150" height="62" rx="9" fill="#2c1505" stroke="#D85A30" strokeWidth="2"/>
-      <text x="497" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#ffc09e">infra</text>
-      <text x="497" y="191" textAnchor="middle" fontSize="10" fill="#e8835a">Docker / SSM</text>
+      <rect x="418" y="148" {...node('#e06b3a')} width="150" height="62"/>
+      <text x="493" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>infra</text>
+      <text x="493" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>Docker / SSM</text>
 
-      <rect x="599" y="148" width="150" height="62" rx="9" fill="#1e1e1c" stroke="#6b6a64" strokeWidth="2"/>
-      <text x="674" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#d4d3cc">docs</text>
-      <text x="674" y="191" textAnchor="middle" fontSize="10" fill="#9B9890">Nextra / MDX</text>
+      <rect x="594" y="148" {...node('#4a4a46')} width="150" height="62"/>
+      <text x="669" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>docs</text>
+      <text x="669" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>Nextra / MDX</text>
 
       {/* ── CI/CD nodes ── */}
-      <rect x="68"  y="271" width="160" height="62" rx="9" fill="#3d1508" stroke="#D85A30" strokeWidth="2"/>
-      <text x="148" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#ffb49a">build &amp; test</text>
-      <text x="148" y="314" textAnchor="middle" fontSize="10" fill="#e8835a">compile · unit test</text>
+      <rect x="66"  y="271" {...node('#e06b3a')} width="158" height="62"/>
+      <text x="145" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>build &amp; test</text>
+      <text x="145" y="314" textAnchor="middle" fontSize="10" fill={labelSecondary}>compile · unit test</text>
 
-      <rect x="265" y="271" width="150" height="62" rx="9" fill="#3d1508" stroke="#D85A30" strokeWidth="2"/>
-      <text x="340" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#ffb49a">deploy job</text>
-      <text x="340" y="314" textAnchor="middle" fontSize="10" fill="#e8835a">SSH to EC2</text>
+      <rect x="262" y="271" {...node('#e06b3a')} width="150" height="62"/>
+      <text x="337" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>deploy job</text>
+      <text x="337" y="314" textAnchor="middle" fontSize="10" fill={labelSecondary}>SSH to EC2</text>
 
-      <rect x="462" y="271" width="178" height="62" rx="9" fill="#2a1808" stroke="#E8A840" strokeWidth="2"/>
-      <text x="551" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#ffd890">SSM param store</text>
-      <text x="551" y="314" textAnchor="middle" fontSize="10" fill="#E8A840">secrets injection</text>
+      <rect x="456" y="271" {...node('#c48a1a')} width="178" height="62"/>
+      <text x="545" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>SSM param store</text>
+      <text x="545" y="314" textAnchor="middle" fontSize="10" fill={labelSecondary}>secrets injection</text>
 
       {/* ── RUNTIME nodes ── */}
-      {/* EC2 container */}
-      <rect x="50" y="388" width="910" height="272" rx="7" fill="none" stroke="#1A5FA5" strokeWidth="1.5" strokeDasharray="7,4"/>
-      <text x="66" y="407" fontSize="10" fontWeight="bold" fill="#5B9EDE">AWS EC2 · m7i-flex.large · 34.227.190.40</text>
+      <rect x="48" y="388" width="920" height="272" rx="6" fill="none" stroke="#1a3a6a" strokeWidth="1" strokeDasharray="6,4"/>
+      <text x="62" y="406" fontSize="10" fill="#3676c4" fontWeight="bold">AWS EC2 · m7i-flex.large · 34.227.190.40</text>
 
-      <rect x="78" y="420" width="175" height="68" rx="9" fill="#0c2d4a" stroke="#3B8FE8" strokeWidth="2"/>
-      <text x="165" y="447" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#c8e4ff">Nginx :80</text>
-      <text x="165" y="466" textAnchor="middle" fontSize="10" fill="#7ab8f5">reverse proxy</text>
+      <rect x="75"  y="418" {...node('#3676c4')} width="175" height="68"/>
+      <text x="162" y="445" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>Nginx :80</text>
+      <text x="162" y="464" textAnchor="middle" fontSize="10" fill={labelSecondary}>reverse proxy</text>
 
-      <rect x="78" y="535" width="195" height="68" rx="9" fill="#0c2d4a" stroke="#3B8FE8" strokeWidth="2"/>
-      <text x="175" y="562" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#c8e4ff">Spring Boot :8080</text>
-      <text x="175" y="581" textAnchor="middle" fontSize="10" fill="#7ab8f5">REST API · JWT · BCrypt</text>
+      <rect x="75"  y="530" {...node('#3676c4')} width="195" height="68"/>
+      <text x="172" y="557" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>Spring Boot :8080</text>
+      <text x="172" y="576" textAnchor="middle" fontSize="10" fill={labelSecondary}>REST API · JWT · BCrypt</text>
 
       {/* MariaDB cylinder */}
-      <rect x="490" y="540" width="195" height="58" fill="#122906" stroke="none"/>
-      <line x1="490" y1="540" x2="490" y2="598" stroke="#5AB870" strokeWidth="2"/>
-      <line x1="685" y1="540" x2="685" y2="598" stroke="#5AB870" strokeWidth="2"/>
-      <ellipse cx="587" cy="598" rx="97" ry="15" fill="#1c3d0c" stroke="#5AB870" strokeWidth="2"/>
-      <ellipse cx="587" cy="540" rx="97" ry="15" fill="#2b5a14" stroke="#5AB870" strokeWidth="2"/>
-      <text x="587" y="564" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#b8e890">MariaDB :3306</text>
-      <text x="587" y="582" textAnchor="middle" fontSize="10" fill="#5AB870">persistent store</text>
+      <rect x="488" y="536" width="194" height="56" fill="#161b22" stroke="none"/>
+      <line x1="488" y1="536" x2="488" y2="592" stroke="#3a8c52" strokeWidth="1.8"/>
+      <line x1="682" y1="536" x2="682" y2="592" stroke="#3a8c52" strokeWidth="1.8"/>
+      <ellipse cx="585" cy="592" rx="97" ry="14" fill="#101e14" stroke="#3a8c52" strokeWidth="1.8"/>
+      <ellipse cx="585" cy="536" rx="97" ry="14" fill="#162b1e" stroke="#3a8c52" strokeWidth="1.8"/>
+      <text x="585" y="560" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>MariaDB :3306</text>
+      <text x="585" y="578" textAnchor="middle" fontSize="10" fill={labelSecondary}>persistent store</text>
 
       {/* ── DEPLOY nodes ── */}
-      <rect x="78" y="694" width="210" height="58" rx="9" fill="#1e1e1c" stroke="#6b6a64" strokeWidth="2"/>
-      <text x="183" y="718" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#d4d3cc">GitHub Pages</text>
-      <text x="183" y="737" textAnchor="middle" fontSize="10" fill="#9B9890">gotokart.github.io/docs</text>
+      <rect x="72" y="692" {...node('#4a4a46')} width="210" height="58"/>
+      <text x="177" y="716" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>GitHub Pages</text>
+      <text x="177" y="735" textAnchor="middle" fontSize="10" fill={labelSecondary}>gotokart.github.io/docs</text>
 
       {/* ══ EDGES ══ */}
 
-      {/* User → Nginx  (HTTP :80 — purple curved) */}
-      <path d="M 233,57 C 1070,57 1070,454 253,454" stroke="#9B8EFF" strokeWidth="2" fill="none" markerEnd="url(#ap)"/>
-      <text x="1030" y="48" fontSize="10" fontWeight="bold" fill="#9B8EFF">HTTP :80</text>
+      {/* User → Nginx  (HTTP :80) */}
+      <path d="M 227,57 C 1068,57 1068,452 250,452" stroke="#7c6fe0" strokeWidth="1.8" fill="none" markerEnd="url(#mv)"/>
+      <text x="1022" y="48" fontSize="10" fontWeight="bold" fill="#7c6fe0">HTTP :80</text>
 
-      {/* Dev → GitHub org  (git push — gray) */}
-      <path d="M 380,86 L 380,124" stroke="#9B9890" strokeWidth="1.5" fill="none" markerEnd="url(#as)"/>
-      <text x="387" y="110" fontSize="10" fill="#9B9890">git push</text>
+      {/* Dev → GitHub org  (git push) */}
+      <path d="M 373,86 L 373,124" stroke="#4a4a46" strokeWidth="1.5" fill="none" markerEnd="url(#ms)"/>
+      <text x="380" y="110" fontSize="10" fill="#4a4a46">git push</text>
 
-      {/* frontend → build & test  (push → Actions — orange dashed) */}
-      <path d="M 143,210 L 143,247 L 148,247 L 148,271" stroke="#F07450" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ar)"/>
-      <text x="40" y="242" fontSize="9" fill="#F07450">push → Actions</text>
+      {/* frontend → build & test */}
+      <path d="M 141,210 L 141,247 L 145,247 L 145,271" stroke="#e06b3a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#mo)"/>
+      <text x="40" y="241" fontSize="9" fill="#e06b3a">push → Actions</text>
 
       {/* backend → build & test */}
-      <path d="M 320,210 C 320,240 148,245 148,271" stroke="#F07450" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ar)"/>
+      <path d="M 317,210 C 317,240 145,244 145,271" stroke="#e06b3a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#mo)"/>
 
-      {/* infra → SSM param store  (amber dashed) */}
-      <path d="M 497,210 C 497,242 551,246 551,271" stroke="#E8A840" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ao)"/>
-      <text x="508" y="242" fontSize="9" fill="#E8A840">push → SSM</text>
+      {/* infra → SSM */}
+      <path d="M 493,210 C 493,240 545,244 545,271" stroke="#c48a1a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ma)"/>
+      <text x="502" y="240" fontSize="9" fill="#c48a1a">push → SSM</text>
 
-      {/* build → deploy  (solid orange) */}
-      <path d="M 228,302 L 265,302" stroke="#F07450" strokeWidth="2" fill="none" markerEnd="url(#ar)"/>
+      {/* build → deploy */}
+      <path d="M 224,302 L 262,302" stroke="#e06b3a" strokeWidth="1.8" fill="none" markerEnd="url(#mo)"/>
 
-      {/* deploy → Nginx  (red dashed — docker compose up) */}
-      <path d="M 340,333 L 340,373 L 165,373 L 165,420" stroke="#F07450" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ar)"/>
-      <text x="172" y="368" fontSize="9" fill="#F07450">docker compose up --build</text>
+      {/* deploy → Nginx */}
+      <path d="M 337,333 L 337,373 L 162,373 L 162,418" stroke="#e06b3a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#mo)"/>
+      <text x="168" y="367" fontSize="9" fill="#e06b3a">docker compose up --build</text>
 
-      {/* SSM → Spring Boot  (amber dashed — env secrets) */}
-      <path d="M 551,333 C 551,460 273,460 273,535" stroke="#E8A840" strokeWidth="1.5" fill="none" strokeDasharray="4,3" markerEnd="url(#ao)"/>
-      <text x="558" y="430" fontSize="9" fill="#E8A840">env secrets</text>
+      {/* SSM → Spring Boot */}
+      <path d="M 545,333 C 545,455 270,455 270,530" stroke="#c48a1a" strokeWidth="1.5" fill="none" strokeDasharray="4,3" markerEnd="url(#ma)"/>
+      <text x="553" y="425" fontSize="9" fill="#c48a1a">env secrets</text>
 
-      {/* Nginx → Spring Boot  (blue — proxy /api/*) */}
-      <path d="M 165,488 L 165,535" stroke="#5FA8F5" strokeWidth="2" fill="none" markerEnd="url(#ab)"/>
-      <text x="172" y="516" fontSize="10" fill="#5FA8F5">proxy /api/*</text>
+      {/* Nginx → Spring Boot */}
+      <path d="M 162,486 L 162,530" stroke="#3676c4" strokeWidth="1.8" fill="none" markerEnd="url(#mb)"/>
+      <text x="170" y="513" fontSize="10" fill="#3676c4">proxy /api/*</text>
 
-      {/* Spring Boot → MariaDB  (green — JPA/SQL) */}
-      <path d="M 273,569 L 490,569" stroke="#5AB870" strokeWidth="2" fill="none" markerEnd="url(#ag)"/>
-      <text x="345" y="561" fontSize="10" fill="#5AB870">JPA / SQL</text>
+      {/* Spring Boot → MariaDB */}
+      <path d="M 270,564 L 488,564" stroke="#3a8c52" strokeWidth="1.8" fill="none" markerEnd="url(#mg)"/>
+      <text x="342" y="556" fontSize="10" fill="#3a8c52">JPA / SQL</text>
 
-      {/* docs → GitHub Pages  (gray dashed — push → Actions) */}
-      <path d="M 674,210 C 674,570 183,570 183,694" stroke="#9B9890" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#as)"/>
-      <text x="700" y="510" fontSize="9" fill="#9B9890">push → Actions</text>
+      {/* docs → GitHub Pages */}
+      <path d="M 669,210 C 669,565 177,565 177,692" stroke="#4a4a46" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ms)"/>
+      <text x="695" y="500" fontSize="9" fill="#4a4a46">push → Actions</text>
 
       {/* ── Legend ── */}
-      <rect x="50" y="790" width="1000" height="24" rx="5" fill="#161616"/>
-      <text x="62" y="806" fontSize="10" fontWeight="bold" fill="#777">Legend:</text>
-      <rect x="112" y="796" width="11" height="11" rx="2" fill="#2a1f60" stroke="#7F77DD" strokeWidth="1"/>
-      <text x="128" y="806" fontSize="10" fill="#777">users/actors</text>
-      <rect x="224" y="796" width="11" height="11" rx="2" fill="#0a3025" stroke="#1D9E75" strokeWidth="1"/>
-      <text x="240" y="806" fontSize="10" fill="#777">source repos</text>
-      <rect x="336" y="796" width="11" height="11" rx="2" fill="#3d1508" stroke="#D85A30" strokeWidth="1"/>
-      <text x="352" y="806" fontSize="10" fill="#777">CI/CD</text>
-      <rect x="392" y="796" width="11" height="11" rx="2" fill="#0c2d4a" stroke="#3B8FE8" strokeWidth="1"/>
-      <text x="408" y="806" fontSize="10" fill="#777">runtime services</text>
-      <rect x="520" y="796" width="11" height="11" rx="2" fill="#122906" stroke="#5AB870" strokeWidth="1"/>
-      <text x="536" y="806" fontSize="10" fill="#777">database</text>
-      <rect x="596" y="796" width="11" height="11" rx="2" fill="#2a1808" stroke="#E8A840" strokeWidth="1"/>
-      <text x="612" y="806" fontSize="10" fill="#777">secrets store</text>
-      <line x1="690" y1="801" x2="716" y2="801" stroke="#9B9890" strokeWidth="1.5" strokeDasharray="5,2"/>
-      <text x="722" y="806" fontSize="10" fill="#777">CI/CD flow</text>
-      <line x1="786" y1="801" x2="812" y2="801" stroke="#9B8EFF" strokeWidth="1.5"/>
-      <text x="818" y="806" fontSize="10" fill="#777">HTTP / data</text>
+      <rect x="48" y="788" width="1004" height="24" rx="5" fill="#111418"/>
+      <text x="60" y="804" fontSize="10" fontWeight="bold" fill="#555">Legend:</text>
+      <rect x="108" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#7c6fe0" strokeWidth="1.5"/>
+      <text x="123" y="804" fontSize="10" fill="#555">actors</text>
+      <rect x="172" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#2ea87e" strokeWidth="1.5"/>
+      <text x="187" y="804" fontSize="10" fill="#555">source repos</text>
+      <rect x="278" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#e06b3a" strokeWidth="1.5"/>
+      <text x="293" y="804" fontSize="10" fill="#555">CI/CD</text>
+      <rect x="334" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#3676c4" strokeWidth="1.5"/>
+      <text x="349" y="804" fontSize="10" fill="#555">runtime</text>
+      <rect x="402" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#3a8c52" strokeWidth="1.5"/>
+      <text x="417" y="804" fontSize="10" fill="#555">database</text>
+      <rect x="480" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#c48a1a" strokeWidth="1.5"/>
+      <text x="495" y="804" fontSize="10" fill="#555">secrets</text>
+      <line x1="548" y1="799" x2="572" y2="799" stroke="#555" strokeWidth="1.5" strokeDasharray="5,2"/>
+      <text x="577" y="804" fontSize="10" fill="#555">CI/CD flow</text>
+      <line x1="646" y1="799" x2="670" y2="799" stroke="#7c6fe0" strokeWidth="1.5"/>
+      <text x="675" y="804" fontSize="10" fill="#555">HTTP / data</text>
     </svg>
   )
 }
