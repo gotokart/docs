@@ -1,191 +1,179 @@
-// Accent palette (one per lane, used for borders, strips, and arrows only)
-// Client: violet · Source: emerald · CI/CD: orange · Runtime: blue · Deploy: gray
-
 export default function ArchitectureDiagram() {
-  // Shared node style — all nodes get the same dark fill; only border changes
-  const node = (accent: string) => ({
-    fill: '#161b22',
-    stroke: accent,
-    strokeWidth: 1.8,
-    rx: 8,
-  } as React.SVGProps<SVGRectElement>)
-
-  const labelPrimary = '#e6edf3'
-  const labelSecondary = '#8b949e'
-
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 1100 840"
+      viewBox="0 0 1080 820"
       width="100%"
-      style={{ fontFamily: "'Segoe UI', Arial, sans-serif", borderRadius: 10 }}
+      style={{ fontFamily: "'Segoe UI', Arial, sans-serif", borderRadius: 8 }}
     >
       <defs>
-        <marker id="mv" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#7c6fe0"/></marker>
-        <marker id="mo" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#e06b3a"/></marker>
-        <marker id="mb" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#3676c4"/></marker>
-        <marker id="mg" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#3a8c52"/></marker>
-        <marker id="ms" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#4a4a46"/></marker>
-        <marker id="ma" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#c48a1a"/></marker>
+        {/* Single dim-gray arrow for most edges */}
+        <marker id="mg" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6Z" fill="#484f58"/>
+        </marker>
+        {/* Dim blue for the main data path */}
+        <marker id="mb" viewBox="0 0 8 6" markerWidth="7" markerHeight="5" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6Z" fill="#388bfd"/>
+        </marker>
       </defs>
 
-      {/* Background */}
-      <rect width="1100" height="840" fill="#0d1117" rx="10"/>
+      {/* ── Canvas ── */}
+      <rect width="1080" height="820" fill="#0d1117" rx="8"/>
 
-      {/* ── Lane fills (very subtle) ── */}
-      <rect x="0" y="12"  width="1100" height="96"  rx="6" fill="#0f0e18" stroke="#2a2460" strokeWidth="1"/>
-      <rect x="0" y="110" width="1100" height="135" rx="6" fill="#0d1410" stroke="#143528" strokeWidth="1"/>
-      <rect x="0" y="247" width="1100" height="124" rx="6" fill="#140d07" stroke="#3a2010" strokeWidth="1"/>
-      <rect x="0" y="373" width="1100" height="300" rx="6" fill="#080e18" stroke="#102240" strokeWidth="1"/>
-      <rect x="0" y="675" width="1100" height="100" rx="6" fill="#0f0f0e" stroke="#2a2a28" strokeWidth="1"/>
+      {/* ── Thin lane separators ── */}
+      <line x1="0" y1="108" x2="1080" y2="108" stroke="#21262d" strokeWidth="1"/>
+      <line x1="0" y1="244" x2="1080" y2="244" stroke="#21262d" strokeWidth="1"/>
+      <line x1="0" y1="370" x2="1080" y2="370" stroke="#21262d" strokeWidth="1"/>
+      <line x1="0" y1="666" x2="1080" y2="666" stroke="#21262d" strokeWidth="1"/>
+      <line x1="0" y1="768" x2="1080" y2="768" stroke="#21262d" strokeWidth="1"/>
 
-      {/* ── Lane label strips (30px) ── */}
-      <rect x="0" y="12"  width="30" height="96"  rx="5" fill="#1a1630" stroke="#7c6fe0" strokeWidth="1.5"/>
-      <text x="15" y="60"  textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,60)"  fontSize="10" fontWeight="bold" fill="#7c6fe0">client</text>
+      {/* ── Lane labels (small, muted, left side) ── */}
+      {/* Lane label backgrounds */}
+      <rect x="0" y="12"  width="28" height="96"  rx="4" fill="#161b22"/>
+      <rect x="0" y="110" width="28" height="134" rx="4" fill="#161b22"/>
+      <rect x="0" y="246" width="28" height="124" rx="4" fill="#161b22"/>
+      <rect x="0" y="372" width="28" height="294" rx="4" fill="#161b22"/>
+      <rect x="0" y="668" width="28" height="100" rx="4" fill="#161b22"/>
 
-      <rect x="0" y="110" width="30" height="135" rx="5" fill="#0d2018" stroke="#2ea87e" strokeWidth="1.5"/>
-      <text x="15" y="177" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,177)" fontSize="10" fontWeight="bold" fill="#2ea87e">source (GitHub)</text>
+      <text x="14" y="60"  textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,14,60)"  fontSize="9" fill="#484f58" letterSpacing="0.5">CLIENT</text>
+      <text x="14" y="177" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,14,177)" fontSize="9" fill="#484f58" letterSpacing="0.5">SOURCE</text>
+      <text x="14" y="308" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,14,308)" fontSize="9" fill="#484f58" letterSpacing="0.5">CI / CD</text>
+      <text x="14" y="519" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,14,519)" fontSize="9" fill="#484f58" letterSpacing="0.5">RUNTIME</text>
+      <text x="14" y="718" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,14,718)" fontSize="9" fill="#484f58" letterSpacing="0.5">DEPLOY</text>
 
-      <rect x="0" y="247" width="30" height="124" rx="5" fill="#1e1008" stroke="#e06b3a" strokeWidth="1.5"/>
-      <text x="15" y="309" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,309)" fontSize="10" fontWeight="bold" fill="#e06b3a">CI / CD</text>
+      {/* ══════════════════════════════════════
+          NODES  — all same style:
+          fill #161b22, border #30363d, radius 6
+          title #c9d1d9, subtitle #6e7681
+      ══════════════════════════════════════ */}
 
-      <rect x="0" y="373" width="30" height="300" rx="5" fill="#081428" stroke="#3676c4" strokeWidth="1.5"/>
-      <text x="15" y="523" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,523)" fontSize="10" fontWeight="bold" fill="#3676c4">runtime (AWS EC2)</text>
+      {/* CLIENT */}
+      <rect x="68"  y="28" width="152" height="56" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="144" y="50" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">User</text>
+      <text x="144" y="68" textAnchor="middle" fontSize="10" fill="#6e7681">browser / mobile</text>
 
-      <rect x="0" y="675" width="30" height="100" rx="5" fill="#161614" stroke="#4a4a46" strokeWidth="1.5"/>
-      <text x="15" y="725" textAnchor="middle" dominantBaseline="middle" transform="rotate(-90,15,725)" fontSize="10" fontWeight="bold" fill="#4a4a46">deploy targets</text>
+      <rect x="288" y="28" width="148" height="56" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="362" y="50" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">Dev</text>
+      <text x="362" y="68" textAnchor="middle" fontSize="10" fill="#6e7681">local machine</text>
 
-      {/* ── CLIENT nodes ── */}
-      <rect x="72" y="28" {...node('#7c6fe0')} width="155" height="58"/>
-      <text x="149" y="51" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>User</text>
-      <text x="149" y="70" textAnchor="middle" fontSize="10" fill={labelSecondary}>browser / mobile</text>
+      {/* SOURCE — GitHub org dashed wrapper */}
+      <rect x="46" y="122" width="882" height="108" rx="5" fill="none" stroke="#21262d" strokeWidth="1" strokeDasharray="5,4"/>
+      <text x="60" y="139" fontSize="9" fill="#30363d" letterSpacing="0.4">GITHUB — GOTOKART ORG</text>
 
-      <rect x="298" y="28" {...node('#4a4a46')} width="150" height="58"/>
-      <text x="373" y="51" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>Dev</text>
-      <text x="373" y="70" textAnchor="middle" fontSize="10" fill={labelSecondary}>local machine</text>
+      <rect x="64"  y="146" width="148" height="60" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="138" y="168" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">frontend</text>
+      <text x="138" y="186" textAnchor="middle" fontSize="10" fill="#6e7681">HTML / CSS / JS</text>
 
-      {/* ── SOURCE nodes ── */}
-      <rect x="48" y="124" width="900" height="110" rx="6" fill="none" stroke="#1e5e44" strokeWidth="1" strokeDasharray="6,4"/>
-      <text x="62" y="143" fontSize="10" fill="#2ea87e" fontWeight="bold">GitHub — gotokart org</text>
+      <rect x="236" y="146" width="148" height="60" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="310" y="168" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">backend</text>
+      <text x="310" y="186" textAnchor="middle" fontSize="10" fill="#6e7681">Spring Boot</text>
 
-      <rect x="66"  y="148" {...node('#2ea87e')} width="150" height="62"/>
-      <text x="141" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>frontend</text>
-      <text x="141" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>HTML / CSS / JS</text>
+      <rect x="408" y="146" width="148" height="60" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="482" y="168" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">infra</text>
+      <text x="482" y="186" textAnchor="middle" fontSize="10" fill="#6e7681">Docker / SSM</text>
 
-      <rect x="242" y="148" {...node('#2ea87e')} width="150" height="62"/>
-      <text x="317" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>backend</text>
-      <text x="317" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>Spring Boot</text>
+      <rect x="580" y="146" width="148" height="60" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="654" y="168" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">docs</text>
+      <text x="654" y="186" textAnchor="middle" fontSize="10" fill="#6e7681">Nextra / MDX</text>
 
-      <rect x="418" y="148" {...node('#e06b3a')} width="150" height="62"/>
-      <text x="493" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>infra</text>
-      <text x="493" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>Docker / SSM</text>
+      {/* CI/CD */}
+      <rect x="64"  y="266" width="152" height="60" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="140" y="289" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">build &amp; test</text>
+      <text x="140" y="307" textAnchor="middle" fontSize="10" fill="#6e7681">compile · unit test</text>
 
-      <rect x="594" y="148" {...node('#4a4a46')} width="150" height="62"/>
-      <text x="669" y="171" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>docs</text>
-      <text x="669" y="190" textAnchor="middle" fontSize="10" fill={labelSecondary}>Nextra / MDX</text>
+      <rect x="252" y="266" width="148" height="60" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="326" y="289" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">deploy job</text>
+      <text x="326" y="307" textAnchor="middle" fontSize="10" fill="#6e7681">SSH to EC2</text>
 
-      {/* ── CI/CD nodes ── */}
-      <rect x="66"  y="271" {...node('#e06b3a')} width="158" height="62"/>
-      <text x="145" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>build &amp; test</text>
-      <text x="145" y="314" textAnchor="middle" fontSize="10" fill={labelSecondary}>compile · unit test</text>
+      <rect x="440" y="266" width="172" height="60" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="526" y="289" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">SSM param store</text>
+      <text x="526" y="307" textAnchor="middle" fontSize="10" fill="#6e7681">secrets injection</text>
 
-      <rect x="262" y="271" {...node('#e06b3a')} width="150" height="62"/>
-      <text x="337" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>deploy job</text>
-      <text x="337" y="314" textAnchor="middle" fontSize="10" fill={labelSecondary}>SSH to EC2</text>
+      {/* RUNTIME — EC2 dashed wrapper */}
+      <rect x="46" y="384" width="882" height="268" rx="5" fill="none" stroke="#21262d" strokeWidth="1" strokeDasharray="5,4"/>
+      <text x="60" y="400" fontSize="9" fill="#30363d" letterSpacing="0.4">AWS EC2 · m7i-flex.large · 34.227.190.40</text>
 
-      <rect x="456" y="271" {...node('#c48a1a')} width="178" height="62"/>
-      <text x="545" y="295" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>SSM param store</text>
-      <text x="545" y="314" textAnchor="middle" fontSize="10" fill={labelSecondary}>secrets injection</text>
+      {/* Nginx — highlighted with blue border (it's the entry point) */}
+      <rect x="72"  y="412" width="170" height="64" rx="6" fill="#161b22" stroke="#388bfd" strokeWidth="1.5"/>
+      <text x="157" y="437" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">Nginx :80</text>
+      <text x="157" y="456" textAnchor="middle" fontSize="10" fill="#6e7681">reverse proxy</text>
 
-      {/* ── RUNTIME nodes ── */}
-      <rect x="48" y="388" width="920" height="272" rx="6" fill="none" stroke="#1a3a6a" strokeWidth="1" strokeDasharray="6,4"/>
-      <text x="62" y="406" fontSize="10" fill="#3676c4" fontWeight="bold">AWS EC2 · m7i-flex.large · 34.227.190.40</text>
+      <rect x="72"  y="522" width="188" height="64" rx="6" fill="#161b22" stroke="#388bfd" strokeWidth="1.5"/>
+      <text x="166" y="547" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">Spring Boot :8080</text>
+      <text x="166" y="566" textAnchor="middle" fontSize="10" fill="#6e7681">REST API · JWT · BCrypt</text>
 
-      <rect x="75"  y="418" {...node('#3676c4')} width="175" height="68"/>
-      <text x="162" y="445" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>Nginx :80</text>
-      <text x="162" y="464" textAnchor="middle" fontSize="10" fill={labelSecondary}>reverse proxy</text>
+      {/* MariaDB cylinder — same dark fill, green border only */}
+      <rect x="470" y="528" width="192" height="52" fill="#161b22" stroke="none"/>
+      <line x1="470" y1="528" x2="470" y2="580" stroke="#3a8c52" strokeWidth="1.5"/>
+      <line x1="662" y1="528" x2="662" y2="580" stroke="#3a8c52" strokeWidth="1.5"/>
+      <ellipse cx="566" cy="580" rx="96" ry="13" fill="#161b22" stroke="#3a8c52" strokeWidth="1.5"/>
+      <ellipse cx="566" cy="528" rx="96" ry="13" fill="#1c2128" stroke="#3a8c52" strokeWidth="1.5"/>
+      <text x="566" y="552" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">MariaDB :3306</text>
+      <text x="566" y="570" textAnchor="middle" fontSize="10" fill="#6e7681">persistent store</text>
 
-      <rect x="75"  y="530" {...node('#3676c4')} width="195" height="68"/>
-      <text x="172" y="557" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>Spring Boot :8080</text>
-      <text x="172" y="576" textAnchor="middle" fontSize="10" fill={labelSecondary}>REST API · JWT · BCrypt</text>
+      {/* DEPLOY */}
+      <rect x="68"  y="686" width="206" height="56" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="171" y="709" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">GitHub Pages</text>
+      <text x="171" y="728" textAnchor="middle" fontSize="10" fill="#6e7681">gotokart.github.io/docs</text>
 
-      {/* MariaDB cylinder */}
-      <rect x="488" y="536" width="194" height="56" fill="#161b22" stroke="none"/>
-      <line x1="488" y1="536" x2="488" y2="592" stroke="#3a8c52" strokeWidth="1.8"/>
-      <line x1="682" y1="536" x2="682" y2="592" stroke="#3a8c52" strokeWidth="1.8"/>
-      <ellipse cx="585" cy="592" rx="97" ry="14" fill="#101e14" stroke="#3a8c52" strokeWidth="1.8"/>
-      <ellipse cx="585" cy="536" rx="97" ry="14" fill="#162b1e" stroke="#3a8c52" strokeWidth="1.8"/>
-      <text x="585" y="560" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>MariaDB :3306</text>
-      <text x="585" y="578" textAnchor="middle" fontSize="10" fill={labelSecondary}>persistent store</text>
+      {/* ══════════════════════════════════════
+          EDGES — all #484f58 except blue data path
+      ══════════════════════════════════════ */}
 
-      {/* ── DEPLOY nodes ── */}
-      <rect x="72" y="692" {...node('#4a4a46')} width="210" height="58"/>
-      <text x="177" y="716" textAnchor="middle" fontSize="12" fontWeight="bold" fill={labelPrimary}>GitHub Pages</text>
-      <text x="177" y="735" textAnchor="middle" fontSize="10" fill={labelSecondary}>gotokart.github.io/docs</text>
+      {/* User → Nginx  (HTTP, curved — dim violet hint) */}
+      <path d="M 220,56 C 1052,56 1052,444 242,444" stroke="#484f58" strokeWidth="1.5" fill="none" markerEnd="url(#mg)"/>
+      <text x="1010" y="47" fontSize="9" fill="#484f58">HTTP :80</text>
 
-      {/* ══ EDGES ══ */}
-
-      {/* User → Nginx  (HTTP :80) */}
-      <path d="M 227,57 C 1068,57 1068,452 250,452" stroke="#7c6fe0" strokeWidth="1.8" fill="none" markerEnd="url(#mv)"/>
-      <text x="1022" y="48" fontSize="10" fontWeight="bold" fill="#7c6fe0">HTTP :80</text>
-
-      {/* Dev → GitHub org  (git push) */}
-      <path d="M 373,86 L 373,124" stroke="#4a4a46" strokeWidth="1.5" fill="none" markerEnd="url(#ms)"/>
-      <text x="380" y="110" fontSize="10" fill="#4a4a46">git push</text>
+      {/* Dev → GitHub org */}
+      <path d="M 362,84 L 362,122" stroke="#484f58" strokeWidth="1.5" fill="none" markerEnd="url(#mg)"/>
+      <text x="368" y="108" fontSize="9" fill="#484f58">git push</text>
 
       {/* frontend → build & test */}
-      <path d="M 141,210 L 141,247 L 145,247 L 145,271" stroke="#e06b3a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#mo)"/>
-      <text x="40" y="241" fontSize="9" fill="#e06b3a">push → Actions</text>
+      <path d="M 138,206 L 138,244 L 140,244 L 140,266" stroke="#484f58" strokeWidth="1.3" fill="none" strokeDasharray="5,3" markerEnd="url(#mg)"/>
+      <text x="38" y="237" fontSize="9" fill="#484f58">push → Actions</text>
 
       {/* backend → build & test */}
-      <path d="M 317,210 C 317,240 145,244 145,271" stroke="#e06b3a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#mo)"/>
+      <path d="M 310,206 C 310,237 140,241 140,266" stroke="#484f58" strokeWidth="1.3" fill="none" strokeDasharray="5,3" markerEnd="url(#mg)"/>
 
       {/* infra → SSM */}
-      <path d="M 493,210 C 493,240 545,244 545,271" stroke="#c48a1a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ma)"/>
-      <text x="502" y="240" fontSize="9" fill="#c48a1a">push → SSM</text>
+      <path d="M 482,206 C 482,237 526,241 526,266" stroke="#484f58" strokeWidth="1.3" fill="none" strokeDasharray="5,3" markerEnd="url(#mg)"/>
+      <text x="490" y="237" fontSize="9" fill="#484f58">push → SSM</text>
 
       {/* build → deploy */}
-      <path d="M 224,302 L 262,302" stroke="#e06b3a" strokeWidth="1.8" fill="none" markerEnd="url(#mo)"/>
+      <path d="M 216,296 L 252,296" stroke="#484f58" strokeWidth="1.5" fill="none" markerEnd="url(#mg)"/>
 
       {/* deploy → Nginx */}
-      <path d="M 337,333 L 337,373 L 162,373 L 162,418" stroke="#e06b3a" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#mo)"/>
-      <text x="168" y="367" fontSize="9" fill="#e06b3a">docker compose up --build</text>
+      <path d="M 326,326 L 326,370 L 157,370 L 157,412" stroke="#484f58" strokeWidth="1.3" fill="none" strokeDasharray="5,3" markerEnd="url(#mg)"/>
+      <text x="165" y="364" fontSize="9" fill="#484f58">compose up --build</text>
 
       {/* SSM → Spring Boot */}
-      <path d="M 545,333 C 545,455 270,455 270,530" stroke="#c48a1a" strokeWidth="1.5" fill="none" strokeDasharray="4,3" markerEnd="url(#ma)"/>
-      <text x="553" y="425" fontSize="9" fill="#c48a1a">env secrets</text>
+      <path d="M 526,326 C 526,448 260,448 260,522" stroke="#484f58" strokeWidth="1.3" fill="none" strokeDasharray="4,3" markerEnd="url(#mg)"/>
+      <text x="534" y="418" fontSize="9" fill="#484f58">env secrets</text>
 
-      {/* Nginx → Spring Boot */}
-      <path d="M 162,486 L 162,530" stroke="#3676c4" strokeWidth="1.8" fill="none" markerEnd="url(#mb)"/>
-      <text x="170" y="513" fontSize="10" fill="#3676c4">proxy /api/*</text>
+      {/* Nginx → Spring Boot  (blue — main data path) */}
+      <path d="M 157,476 L 157,522" stroke="#388bfd" strokeWidth="1.8" fill="none" markerEnd="url(#mb)"/>
+      <text x="164" y="504" fontSize="9" fill="#388bfd">proxy /api/*</text>
 
-      {/* Spring Boot → MariaDB */}
-      <path d="M 270,564 L 488,564" stroke="#3a8c52" strokeWidth="1.8" fill="none" markerEnd="url(#mg)"/>
-      <text x="342" y="556" fontSize="10" fill="#3a8c52">JPA / SQL</text>
+      {/* Spring Boot → MariaDB  (blue — main data path) */}
+      <path d="M 260,554 L 470,554" stroke="#388bfd" strokeWidth="1.8" fill="none" markerEnd="url(#mb)"/>
+      <text x="328" y="546" fontSize="9" fill="#388bfd">JPA / SQL</text>
 
       {/* docs → GitHub Pages */}
-      <path d="M 669,210 C 669,565 177,565 177,692" stroke="#4a4a46" strokeWidth="1.5" fill="none" strokeDasharray="5,3" markerEnd="url(#ms)"/>
-      <text x="695" y="500" fontSize="9" fill="#4a4a46">push → Actions</text>
+      <path d="M 654,206 C 654,560 171,560 171,686" stroke="#484f58" strokeWidth="1.3" fill="none" strokeDasharray="5,3" markerEnd="url(#mg)"/>
+      <text x="680" y="480" fontSize="9" fill="#484f58">push → Actions</text>
 
       {/* ── Legend ── */}
-      <rect x="48" y="788" width="1004" height="24" rx="5" fill="#111418"/>
-      <text x="60" y="804" fontSize="10" fontWeight="bold" fill="#555">Legend:</text>
-      <rect x="108" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#7c6fe0" strokeWidth="1.5"/>
-      <text x="123" y="804" fontSize="10" fill="#555">actors</text>
-      <rect x="172" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#2ea87e" strokeWidth="1.5"/>
-      <text x="187" y="804" fontSize="10" fill="#555">source repos</text>
-      <rect x="278" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#e06b3a" strokeWidth="1.5"/>
-      <text x="293" y="804" fontSize="10" fill="#555">CI/CD</text>
-      <rect x="334" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#3676c4" strokeWidth="1.5"/>
-      <text x="349" y="804" fontSize="10" fill="#555">runtime</text>
-      <rect x="402" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#3a8c52" strokeWidth="1.5"/>
-      <text x="417" y="804" fontSize="10" fill="#555">database</text>
-      <rect x="480" y="794" width="10" height="10" rx="2" fill="#161b22" stroke="#c48a1a" strokeWidth="1.5"/>
-      <text x="495" y="804" fontSize="10" fill="#555">secrets</text>
-      <line x1="548" y1="799" x2="572" y2="799" stroke="#555" strokeWidth="1.5" strokeDasharray="5,2"/>
-      <text x="577" y="804" fontSize="10" fill="#555">CI/CD flow</text>
-      <line x1="646" y1="799" x2="670" y2="799" stroke="#7c6fe0" strokeWidth="1.5"/>
-      <text x="675" y="804" fontSize="10" fill="#555">HTTP / data</text>
+      <rect x="46" y="782" width="988" height="24" rx="4" fill="#161b22"/>
+      <rect x="58"  y="789" width="10" height="10" rx="2" fill="#161b22" stroke="#30363d" strokeWidth="1.5"/>
+      <text x="73"  y="799" fontSize="9" fill="#484f58">nodes (dark)</text>
+      <rect x="148" y="789" width="10" height="10" rx="2" fill="#161b22" stroke="#388bfd" strokeWidth="1.5"/>
+      <text x="163" y="799" fontSize="9" fill="#484f58">entry / data path</text>
+      <rect x="272" y="789" width="10" height="10" rx="2" fill="#161b22" stroke="#3a8c52" strokeWidth="1.5"/>
+      <text x="287" y="799" fontSize="9" fill="#484f58">database</text>
+      <line x1="352" y1="794" x2="376" y2="794" stroke="#388bfd" strokeWidth="1.5"/>
+      <text x="381" y="799" fontSize="9" fill="#484f58">HTTP / SQL</text>
+      <line x1="452" y1="794" x2="476" y2="794" stroke="#484f58" strokeWidth="1.3" strokeDasharray="5,2"/>
+      <text x="481" y="799" fontSize="9" fill="#484f58">CI/CD flow</text>
     </svg>
   )
 }
