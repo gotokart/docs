@@ -67,49 +67,22 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
 </p>
 
 ```mermaid
-flowchart TB
-  subgraph Internet
-    U[👤 User Browser]
+flowchart LR
+  U[👤 User] -->|HTTP| EC2
+
+  subgraph EC2["AWS EC2  ·  34.227.190.40  ·  m7i-flex.large"]
+    NG[Nginx :80] -->|proxy /api/*| BE[Spring Boot :8080]
+    BE -->|JPA| DB[(MariaDB :3306)]
   end
 
-  subgraph EC2["☁️ AWS EC2 — gotokart-server (m7i-flex.large · us-east-1c · 34.227.190.40)"]
+  subgraph GH[GitHub — gotokart]
     direction TB
-    NG["🟩 Nginx :80\n(nginx:alpine container)\nServes static files\nProxies /api/*"]
-    BE["🍃 Spring Boot :8080\n(Docker container)\nJWT Auth · REST API\nBCrypt · Spring Security"]
-    DB[("🐬 MariaDB 10.11 :3306\n(Docker container)\ngotokart database")]
-    NG -->|proxy_pass /api/| BE
-    BE -->|JPA / Hibernate| DB
+    FE[frontend] & BE2[backend] & INF[infra] & DOC[docs]
   end
 
-  subgraph GitHub["🐙 GitHub — gotokart org"]
-    RepoFE[frontend repo]
-    RepoBE[backend repo]
-    RepoInfra[infra repo]
-    RepoDocs[docs repo]
-  end
-
-  subgraph CI["⚙️ GitHub Actions CI/CD"]
-    Deploy["SSM Send-Command\n→ EC2 pull + rebuild"]
-    PagesCI["Publish to\nGitHub Pages"]
-  end
-
-  U -->|HTTP :80| NG
-  Dev[👨‍💻 Developer] --> RepoFE & RepoBE & RepoInfra & RepoDocs
-  RepoInfra -->|push to main| Deploy
-  RepoBE -->|push to main| Deploy
-  RepoDocs -->|push to main| PagesCI
-  Deploy -->|docker compose up --build| EC2
-  PagesCI --> DocsURL["gotokart.github.io/docs"]
-```
-
-### Request flow
-
-```
-Browser  ──HTTP──▶  EC2 :80 (Nginx)
-                        │
-                   /api/* ──proxy_pass──▶  backend:8080 (Spring Boot)
-                        │                       │
-                   /    ──static files           └──JPA──▶  mariadb:3306
+  Dev[👨‍💻 Dev] --> GH
+  INF -->|push → GitHub Actions SSM| EC2
+  DOC -->|push → GitHub Actions| Pages[GitHub Pages\ndocs site]
 ```
 
 ## Where to go next
