@@ -91,7 +91,7 @@ export default function ArchitectureDiagram() {
 
       {/* RUNTIME — EC2 dashed wrapper */}
       <rect x="46" y="384" width="882" height="268" rx="5" fill="none" stroke="#21262d" strokeWidth="1" strokeDasharray="5,4"/>
-      <text x="60" y="400" fontSize="9" fill="#30363d" letterSpacing="0.4">AWS EC2 · m7i-flex.large · 34.227.190.40</text>
+      <text x="60" y="400" fontSize="9" fill="#30363d" letterSpacing="0.4">AWS EC2 · t3.small · 34.229.50.171</text>
 
       {/* Nginx — highlighted with blue border (it's the entry point) */}
       <rect x="72"  y="412" width="170" height="64" rx="6" fill="#161b22" stroke="#388bfd" strokeWidth="1.5"/>

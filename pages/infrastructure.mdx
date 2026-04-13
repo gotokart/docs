@@ -8,10 +8,34 @@ Full deployment reference for GoToKart on AWS EC2. See the [infra repo](https://
 
 | | |
 |-|-|
-| **URL** | `http://34.227.190.40` |
-| **Instance** | `gotokart-server` — `m7i-flex.large` — `us-east-1c` |
+| **Status** | Active |
+| **Storefront** | `http://34.229.50.171` |
+| **API** | `http://34.229.50.171/api/` |
+
+### EC2 instance
+
+| Field | Value |
+|-------|-------|
+| **Name** | `gotokart-ecommerce` |
+| **Instance ID** | `i-0dcb2819d4c3539f5` |
+| **Type** | `t3.small` (2 vCPU, 2 GiB RAM) |
+| **Region** | `us-east-1` (N. Virginia) |
+| **Public IP** | `34.229.50.171` |
+| **Access** | AWS Systems Manager — Session Manager |
+| **Schedule** | 9 AM – 9 PM IST (Amazon EventBridge) |
+| **Root volume** | 20 GB EBS (~5.9 GB used) |
 | **OS** | Amazon Linux 2023 (kernel 6.1) |
-| **Launched** | 2026-04-07 |
+
+### Docker stack (3 containers)
+
+| Role | Service | Port / exposure |
+|------|---------|-----------------|
+| Frontend | Nginx | **80** → public |
+| Backend | Spring Boot | **8080** → internal (`/api` via Nginx) |
+| Database | MariaDB 10.11 | **3306** → internal |
+
+**Compose network:** `infra_gotokart-net`  
+**Database volume:** `infra_mysql-data` (persistent)
 
 ## Architecture
 
@@ -22,7 +46,7 @@ Full deployment reference for GoToKart on AWS EC2. See the [infra repo](https://
   <a href="https://github.com/gotokart/docs/blob/main/diagrams/architecture.drawio" target="_blank" rel="noreferrer">Open editable .drawio source →</a>
 </p>
 
-All three services run as Docker containers on a single EC2 instance, connected via internal bridge network (`gotokart-net`). Only Nginx is exposed to the internet on port 80.
+All three services run as Docker containers on a single EC2 instance, connected via the internal bridge network `infra_gotokart-net`. Only Nginx is exposed to the internet on port 80.
 
 ---
 
@@ -143,3 +167,5 @@ The `infra/.github/workflows/deploy.yml` workflow triggers on push to `infra/mai
 Manual trigger also available from the GitHub Actions UI (`workflow_dispatch`).
 
 Required GitHub secrets: `AWS_IAM_ROLE_ARN`, `AWS_REGION`, `EC2_INSTANCE_ID`.
+
+`EC2_INSTANCE_ID` must match the target instance (current production: `i-0dcb2819d4c3539f5` — `gotokart-ecommerce`).

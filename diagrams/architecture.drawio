@@ -52,7 +52,7 @@
       <mxGeometry x="156" y="34" width="100" height="38" as="geometry"/>
     </mxCell>
 
-    <mxCell id="ec2-box" value="AWS EC2 · m7i-flex.large · 34.227.190.40" style="swimlane;fillColor=#E3F2FD;strokeColor=#0D47A1;dashed=1;startSize=24;fontSize=11;" vertex="1" parent="lane-runtime">
+    <mxCell id="ec2-box" value="AWS EC2 · t3.small · 34.229.50.171" style="swimlane;fillColor=#E3F2FD;strokeColor=#0D47A1;dashed=1;startSize=24;fontSize=11;" vertex="1" parent="lane-runtime">
       <mxGeometry x="400" y="20" width="620" height="180" as="geometry"/>
     </mxCell>
     <mxCell id="nginx" value="&lt;b&gt;Nginx :80&lt;/b&gt;&lt;br/&gt;reverse proxy" style="rounded=1;fillColor=#BBDEFB;strokeColor=#1565C0;fontSize=12;" vertex="1" parent="ec2-box">
