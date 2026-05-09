@@ -2,59 +2,240 @@ import ArchitectureDiagram from '../components/ArchitectureDiagram'
 
 # Infrastructure
 
-Full deployment reference for GoToKart on AWS EC2. See the [infra repo](https://github.com/gotokart/infra) for all config files.
+Full deployment reference for GoToKart on AWS EC2 — domain, TLS, Docker, S3, IAM, and the day-to-day runbook. See the [`infra` repo](https://github.com/gotokart/infra) for all config files referenced here.
 
 ## Live deployment
 
 | | |
 |-|-|
-| **Storefront** | `http://34.229.50.171` |
-| **API** | `http://34.229.50.171/api/` |
+| **Storefront**     | <code>https://gotokart.xyz</code> · <code>https://www.gotokart.xyz</code> |
+| **API**            | <code>https://gotokart.xyz/api/</code> |
+| **HTTP**           | 301-redirected to HTTPS (except `/.well-known/acme-challenge/`) |
+| **TLS issuer**     | Let's Encrypt (ECDSA), webroot challenge |
+| **Auto-renewal**   | `gotokart-cert-renew.timer` — twice daily on EC2 |
 
 ### EC2 instance
 
 | Field | Value |
 |-------|-------|
-| **Status** | Active |
-| **Name** | `gotokart-ecommerce` |
-| **Instance ID** | `i-0dcb2819d4c3539f5` |
-| **Type** | `t3.small` (2 vCPU, 2GB RAM) |
-| **Region** | `us-east-1` (N. Virginia) |
-| **Public IP** | `34.229.50.171` |
+| **Status**       | Active |
+| **Name**         | `gotokart-ecommerce` |
+| **Type**         | `t3.small` (2 vCPU, 2 GB RAM, 2 GB swap) |
+| **Region**       | `us-east-1` (N. Virginia) |
+| **OS**           | Amazon Linux 2023 |
+| **Public IP**    | `52.90.87.237` (the DNS A records for `gotokart.xyz` / `www.gotokart.xyz` point here) |
+| **IAM role**     | `ec2-role-iam` — provides credentials for S3 (no static keys on the box) |
 
-### Docker (**3** containers running)
+### Docker — three containers
 
-| Role | Service | Port |
-|------|---------|------|
-| Frontend | Nginx | 80 |
-| Backend | Spring Boot | 8080 |
-| Database | MariaDB 10.11 | 3306 |
+| Role | Service | Port | Notes |
+|------|---------|------|-------|
+| Frontend | nginx (alpine) | 80 → 443 | Terminates TLS, serves static frontend, reverse-proxies `/api/*` |
+| Backend  | Spring Boot (Java 21) | internal :8080 | Signs S3 presigned URLs, talks to MariaDB |
+| Database | MariaDB 10.11 | internal :3306 | MySQL-compatible; avoids the AL2023 ioctl bug |
 
-**Network:** `infra_gotokart-net`  
-**DB storage:** `infra_mysql-data` (volume)
+**Network:** `infra_gotokart-net`
+**DB volume:** `infra_mysql-data`
+**Cert volumes:** `./certs` (read-only into nginx) · `./certbot-webroot` (read-only into nginx, writable by certbot service unit)
+
+> **Why MariaDB, not MySQL?** The official `mysql:8.x` image crashes on Amazon Linux 2023's kernel (`Inappropriate ioctl for device`). MariaDB 10.11 is a drop-in replacement with no such issue.
 
 ## Architecture
 
 <ArchitectureDiagram />
 
 <p style={{fontSize:"0.8rem",color:"#6b7280",marginTop:"0.4rem"}}>
-  Swimlane diagram — colour-coded by tier (Client → Source → Runtime → Deploy). &nbsp;
+  Swimlane diagram — Client → Source → CI/CD → Runtime → AWS managed → Deploy. &nbsp;
   <a href="https://github.com/gotokart/docs/blob/main/diagrams/architecture.drawio" target="_blank" rel="noreferrer">Open editable .drawio source →</a>
 </p>
 
-All three services run as Docker containers on a single EC2 instance, connected via the internal bridge network `infra_gotokart-net`. Only Nginx is exposed to the internet on port 80.
+All three runtime containers sit on a single EC2 host, connected via the `infra_gotokart-net` bridge network. Only nginx is exposed to the internet (ports 80 + 443). The backend signs S3 PUT URLs using credentials supplied by the EC2 instance profile — there are no AWS access keys anywhere on disk.
 
 ---
 
-## Docker services
+## Repository layout (build context)
 
-| Container | Image | Exposed | Notes |
-|-----------|-------|---------|-------|
-| `gotokart-mysql` | `mariadb:10.11` | Internal only | MySQL-compatible; avoids ioctl bug on AL2023 |
-| `gotokart-backend` | Built from `Dockerfile` | Internal :8080 | Spring Boot, 350 MB mem limit |
-| `gotokart-nginx` | `nginx:alpine` | Port 80 → public | Serves frontend + proxies `/api/` |
+```
+gotokart/
+├── backend/          # Spring Boot source · contains its own Dockerfile
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── pom.xml
+│   └── src/
+├── frontend/         # static HTML/CSS/JS
+└── infra/
+    ├── docker-compose.yaml          # production
+    ├── docker-compose.local.yml     # local dev
+    ├── nginx.conf                   # 80 → 443 redirect + ACME well-known + TLS vhost
+    ├── certs/                       # TLS certs (git-ignored)
+    │   └── README.md                # cert issuance + renewal runbook
+    ├── certbot-webroot/             # ACME HTTP-01 challenge files (git-ignored)
+    └── aws/
+        └── s3-cors-product-images.json
+```
 
-> **Why MariaDB?** The official `mysql:8.x` Docker image crashes on Amazon Linux 2023's kernel (`Inappropriate ioctl for device`). MariaDB 10.11 is a drop-in MySQL replacement with no such issue.
+The compose file's backend service uses `build.context: ../backend` so the Dockerfile can see the full Maven project. **There is no longer any "copy backend source into infra" step** — that was the source of a long sequence of confusing build cache issues.
+
+---
+
+## TLS — Let's Encrypt + nginx (webroot mode)
+
+`nginx.conf` listens on both 80 and 443. Port 80 redirects everything to HTTPS **except** `/.well-known/acme-challenge/`, which is served from a webroot volume that certbot writes into:
+
+```nginx
+server {
+    listen 80;
+    server_name gotokart.xyz www.gotokart.xyz;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    server_name gotokart.xyz www.gotokart.xyz;
+
+    ssl_certificate     /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+    # … gzip / proxy_pass / static config …
+}
+```
+
+### First-time issuance
+
+```bash
+sudo certbot certonly --webroot \
+  -w /home/ec2-user/gotokart/infra/certbot-webroot \
+  -d gotokart.xyz -d www.gotokart.xyz \
+  -m you@example.com --agree-tos --no-eff-email
+```
+
+Then copy `fullchain.pem` and `privkey.pem` from `/etc/letsencrypt/live/gotokart.xyz/` into `infra/certs/` and `docker compose restart nginx`.
+
+### Auto-renewal (systemd timer)
+
+`/usr/local/bin/gotokart-cert-renew.sh`:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+certbot renew --quiet --deploy-hook 'install -m 644 \
+  /etc/letsencrypt/live/gotokart.xyz/fullchain.pem \
+  /etc/letsencrypt/live/gotokart.xyz/privkey.pem \
+  /home/ec2-user/gotokart/infra/certs/ && \
+  docker exec gotokart-nginx nginx -s reload'
+```
+
+Paired with a unit + timer:
+
+```ini
+# /etc/systemd/system/gotokart-cert-renew.service
+[Unit]
+Description=Renew Let's Encrypt certs for gotokart.xyz
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/gotokart-cert-renew.sh
+```
+
+```ini
+# /etc/systemd/system/gotokart-cert-renew.timer
+[Unit]
+Description=Twice-daily certbot renew for gotokart.xyz
+[Timer]
+OnCalendar=*-*-* 03:17,15:17:00
+RandomizedDelaySec=30m
+Persistent=true
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+sudo systemctl enable --now gotokart-cert-renew.timer
+sudo systemctl list-timers | grep gotokart
+sudo systemctl start gotokart-cert-renew.service   # one-time dry-run check
+```
+
+If certbot was originally issued with `--standalone`, switch the renewal config to webroot once:
+
+```bash
+sudo sed -i 's/^authenticator = standalone$/authenticator = webroot/' /etc/letsencrypt/renewal/gotokart.xyz.conf
+echo 'webroot_path = /home/ec2-user/gotokart/infra/certbot-webroot,' | \
+  sudo tee -a /etc/letsencrypt/renewal/gotokart.xyz.conf
+sudo certbot renew --dry-run
+```
+
+Full runbook lives in `infra/certs/README.md`.
+
+---
+
+## S3 — product image storage
+
+| Item | Value |
+|------|-------|
+| Bucket | `gotokart-product-images-035379289330-us-east-1-an` |
+| Region | `us-east-1` |
+| Object prefix | `products/` |
+| Public read | Yes (bucket policy on `products/*`) |
+| Write access | EC2 instance profile only, via IAM policy `GotokartS3ProductImages` |
+
+### IAM policy attached to `ec2-role-iam`
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:DeleteObject", "s3:GetObject"],
+      "Resource": "arn:aws:s3:::gotokart-product-images-035379289330-us-east-1-an/products/*"
+    }
+  ]
+}
+```
+
+### Bucket CORS (`infra/aws/s3-cors-product-images.json`)
+
+```json
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedOrigins": [
+      "https://gotokart.xyz",
+      "https://www.gotokart.xyz",
+      "http://localhost:3000",
+      "http://localhost:5500",
+      "http://127.0.0.1:5500"
+    ],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }
+]
+```
+
+Apply with:
+
+```bash
+aws s3api put-bucket-cors \
+  --bucket gotokart-product-images-035379289330-us-east-1-an \
+  --cors-configuration file://infra/aws/s3-cors-product-images.json
+```
+
+### Why we override the S3 endpoint in code
+
+The AWS SDK still defaults to the legacy global hostname (`<bucket>.s3.amazonaws.com`) for `us-east-1`. That hostname **301-redirects** to the regional one for some buckets, and browsers fail CORS preflights through redirects. The backend forces the regional endpoint:
+
+```java
+S3Presigner.builder()
+    .region(Region.of(region))
+    .credentialsProvider(DefaultCredentialsProvider.create())
+    .endpointOverride(URI.create("https://s3." + region + ".amazonaws.com"))
+    .build();
+```
+
+Same override is applied to `S3Client` so deletes also use the regional endpoint.
 
 ---
 
@@ -64,10 +245,9 @@ All three services run as Docker containers on a single EC2 instance, connected 
 
 ```bash
 sudo yum install -y docker git
-sudo systemctl start docker && sudo systemctl enable docker
+sudo systemctl enable --now docker
 sudo usermod -aG docker ec2-user
 
-# Install latest buildx + compose plugins
 sudo mkdir -p /usr/local/lib/docker/cli-plugins
 sudo curl -SL "https://github.com/docker/buildx/releases/download/v0.19.3/buildx-v0.19.3.linux-amd64" \
   -o /usr/local/lib/docker/cli-plugins/docker-buildx && \
@@ -75,7 +255,7 @@ sudo curl -SL "https://github.com/docker/buildx/releases/download/v0.19.3/buildx
 sudo curl -SL "https://github.com/docker/compose/releases/download/v2.33.1/docker-compose-linux-x86_64" \
   -o /usr/local/lib/docker/cli-plugins/docker-compose && \
   sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
-exit  # re-login for docker group
+exit  # re-login for the docker group
 ```
 
 ### 2. Add swap (prevents OOM on small instances)
@@ -86,48 +266,65 @@ sudo mkswap /swapfile && sudo swapon /swapfile
 echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
 ```
 
-### 3. Clone repos & first deploy
+### 3. Attach the IAM role
+
+In the AWS Console: **EC2 → Instance → Actions → Security → Modify IAM role** and select `ec2-role-iam`.
+
+Verify on the box:
 
 ```bash
-mkdir -p /home/ec2-user/gotokart && cd /home/ec2-user/gotokart
+aws sts get-caller-identity
+```
+
+You should see the role ARN, not "Unable to locate credentials".
+
+### 4. Clone repos & first deploy
+
+```bash
+mkdir -p ~/gotokart && cd ~/gotokart
 git clone https://github.com/gotokart/backend.git
 git clone https://github.com/gotokart/frontend.git
 git clone https://github.com/gotokart/infra.git
 
-# Copy backend source into infra (Docker build context)
-cp backend/pom.xml infra/
-cp -r backend/src infra/src
-cp -r frontend/. infra/frontend/
-
-cd infra && docker compose up -d --build
+cd infra
+docker compose up -d --build
 ```
 
-On first startup, the backend automatically seeds **102 products** and creates the admin user.
+On first startup the backend seeds **102 products** and creates the admin user.
+
+### 5. Issue TLS certs (see [TLS section](#tls--lets-encrypt--nginx-webroot-mode))
 
 ---
 
 ## Re-deploy after code changes
 
-SSH in and run this single command:
+SSH in and run:
 
 ```bash
-cd /home/ec2-user/gotokart && \
-  git -C backend pull origin main && \
+cd ~/gotokart && \
+  git -C backend  pull origin main && \
   git -C frontend pull origin main && \
-  git -C infra pull origin main && \
-  cp backend/pom.xml infra/ && \
-  cp -r backend/src infra/src && \
-  cp -r frontend/. infra/frontend/ && \
+  git -C infra    pull origin main && \
   cd infra && docker compose up -d --build
+```
+
+There are **no `cp` steps** — the compose file builds `../backend` directly.
+
+If you only changed backend code, force a clean rebuild of just that service:
+
+```bash
+docker compose build --no-cache backend && docker compose up -d backend
 ```
 
 ---
 
-## Nginx routing
+## nginx routing
 
 | Path | Destination |
 |------|-------------|
-| `/` | Static files (`infra/frontend/`) |
+| `http://*` | 301 to `https://` |
+| `/.well-known/acme-challenge/` | webroot (`/var/www/certbot`) — port 80 only |
+| `/` | static files (`infra/frontend/`) |
 | `/api/*` | `http://backend:8080/api/` |
 
 ---
@@ -135,33 +332,41 @@ cd /home/ec2-user/gotokart && \
 ## Useful commands
 
 ```bash
-docker compose ps                      # check all containers
-docker logs -f gotokart-backend        # backend logs live
-docker logs -f gotokart-mysql          # MariaDB logs
-docker compose restart nginx           # reload nginx config
-docker compose down -v && docker compose up -d --build  # full wipe + rebuild
+docker compose ps                                      # check all containers
+docker logs -f gotokart-backend                        # backend logs live
+docker logs -f gotokart-mysql                          # MariaDB logs
+docker compose restart nginx                          # reload nginx config
+docker compose build --no-cache backend && \
+  docker compose up -d backend                         # rebuild only backend
+docker compose down -v && docker compose up -d --build # full wipe + rebuild
+docker system prune -af && docker builder prune -af    # reclaim disk space
+
+sudo systemctl list-timers | grep gotokart             # next renewal run
+sudo journalctl -u gotokart-cert-renew.service -n 50   # last renewal log
 ```
 
 ---
 
 ## EC2 Security Group
 
-| Type | Port | Source |
-|------|------|--------|
-| SSH | 22 | Your IP |
-| HTTP | 80 | 0.0.0.0/0 |
+| Type  | Port | Source       | Purpose |
+|-------|------|--------------|---------|
+| SSH   | 22   | Your IP      | Management |
+| HTTP  | 80   | 0.0.0.0/0    | ACME challenge + redirect to HTTPS |
+| HTTPS | 443  | 0.0.0.0/0    | Production traffic |
 
 ---
 
 ## CI/CD flow
 
 The `infra/.github/workflows/deploy.yml` workflow triggers on push to `infra/main`:
-1. Authenticates to AWS via OIDC (no stored keys)
-2. Sends `aws ssm send-command` to EC2
-3. EC2 pulls all repos, copies source, rebuilds containers
 
-Manual trigger also available from the GitHub Actions UI (`workflow_dispatch`).
+1. Authenticates to AWS via OIDC (no stored keys).
+2. Sends `aws ssm send-command` to EC2.
+3. EC2 pulls all repos and runs `docker compose up -d --build`.
+
+Manual trigger is also available from the GitHub Actions UI (`workflow_dispatch`).
 
 Required GitHub secrets: `AWS_IAM_ROLE_ARN`, `AWS_REGION`, `EC2_INSTANCE_ID`.
 
-`EC2_INSTANCE_ID` must match the target instance (current production: `i-0dcb2819d4c3539f5` — `gotokart-ecommerce`).
+`EC2_INSTANCE_ID` must match the target instance (`gotokart-ecommerce` in `us-east-1`).

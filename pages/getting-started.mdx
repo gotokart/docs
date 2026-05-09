@@ -2,9 +2,15 @@
 
 ## Live site
 
-The app is already deployed and running at **`http://34.229.50.171`** — open it directly to use GoToKart without any local setup.
+The app is already deployed and running at **[https://gotokart.xyz](https://gotokart.xyz)** (and `www.gotokart.xyz`) — open it directly to use GoToKart with no local setup.
 
-Default admin login: `admin@gotokart.com` / `admin123`
+| | |
+|-|-|
+| Storefront | <code>https://gotokart.xyz</code> |
+| API base | <code>https://gotokart.xyz/api</code> |
+| Default admin | `admin@gotokart.com` / `admin123` |
+
+HTTP requests are 301-redirected to HTTPS. The certificate is issued by Let's Encrypt and renewed automatically twice a day by a `systemd` timer on EC2.
 
 ---
 
@@ -17,31 +23,55 @@ git clone https://github.com/gotokart/infra.git
 git clone https://github.com/gotokart/docs.git
 ```
 
+The four repos sit side-by-side. The `infra` compose file references `../backend` as the build context — keep them in sibling directories.
+
 ---
 
 ## Run locally
 
 ### Option A — Docker (recommended)
 
-Requires Docker Desktop installed.
+Requires Docker Desktop.
 
 ```bash
 cd infra
+cp .env.example .env          # one-time
 docker compose -f docker-compose.local.yml up --build
 ```
 
-This starts MariaDB, Spring Boot backend, and Nginx. Open `http://localhost`.
+This starts MariaDB, the Spring Boot backend, and nginx serving the static frontend at <code>http://localhost</code>. The local compose file does **not** terminate TLS — it speaks plain HTTP on port 80 because there's no domain to certificate.
+
+#### AWS credentials for local image uploads
+
+The backend needs AWS credentials whenever it signs an S3 upload URL. On EC2 these come from the IAM instance profile; locally you have two clean options:
+
+```bash
+# Option 1 — named AWS profile (recommended)
+aws configure --profile gotokart
+export AWS_PROFILE=gotokart
+
+# Option 2 — short-lived keys via env
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+export AWS_SESSION_TOKEN=...   # optional, for SSO/STS
+
+docker compose -f docker-compose.local.yml up --build
+```
+
+`docker-compose.local.yml` passes `AWS_PROFILE` and the three keys through to the backend container. If neither is set, image upload requests will fail with `401 Unable to locate credentials` — but everything else (auth, products, cart, orders) still works.
 
 ### Option B — Backend directly (no Docker)
 
-Prerequisites: Java 21, Maven 3.9+, MySQL or MariaDB running locally.
+Prerequisites: Java 21, Maven 3.9+, MySQL or MariaDB on `localhost:3306`.
 
-**1. Create the database:**
+**1. Create the database**
+
 ```sql
 CREATE DATABASE gotokart;
 ```
 
-**2. Configure `backend/src/main/resources/application.properties`:**
+**2. Configure `backend/src/main/resources/application.properties`**
+
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/gotokart?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 spring.datasource.username=root
@@ -49,15 +79,22 @@ spring.datasource.password=Root@1234
 
 jwt.secret=GoToKartSuperSecretJwtKey2026!!VeryLongAndSecure@#$%
 jwt.expiry-ms=86400000
+
+# AWS S3 (only needed if you want to test image uploads)
+aws.region=us-east-1
+aws.s3.bucket=gotokart-product-images-035379289330-us-east-1-an
+aws.s3.public-base-url=
+aws.s3.presign-ttl-seconds=300
 ```
 
-**3. Start the backend:**
+**3. Start the backend**
+
 ```bash
 cd backend
 mvn clean spring-boot:run
 ```
 
-**4. Open the frontend:**
+**4. Open the frontend**
 
 Open `frontend/index.html` directly in your browser. It auto-detects local mode and calls `http://localhost:8080/api`.
 
@@ -79,10 +116,24 @@ On first startup the backend also seeds **102 products** across 11 categories.
 
 ## How authentication works
 
-1. Click **Login** → enter email and password
-2. Frontend calls `POST /api/auth/login` → receives JWT token
-3. Token saved to `localStorage`, sent as `Authorization: Bearer <token>` on admin requests
-4. Session restored automatically on page reload
+1. Click **Login**, enter email and password.
+2. Frontend calls `POST /api/auth/login` and receives a JWT.
+3. The token is stored in `localStorage` (`gk_token`) and sent as `Authorization: Bearer <token>` on admin-only requests.
+4. Session is restored automatically on page reload.
+
+---
+
+## How an admin uploads a product image
+
+The browser never proxies image bytes through the API.
+
+1. Admin submits the product form with an image file.
+2. Frontend `POST /api/products` to create or update the row.
+3. Frontend `POST /api/products/{id}/image-upload-url?contentType=image/png` — the backend returns a short-lived presigned PUT URL plus the S3 object key.
+4. Frontend `PUT` the file directly to S3 using that URL.
+5. Frontend `PATCH /api/products/{id}/image` with the object key. The backend stores it on the product and deletes the previous S3 object if the key changed.
+
+See [Backend API → Product images](backend#images) and [Frontend → Image upload flow](frontend#image-upload-flow) for the full details.
 
 ---
 
@@ -94,4 +145,4 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open [http://localhost:3000](http://localhost:3000).

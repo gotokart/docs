@@ -165,6 +165,12 @@
   border-color: rgba(255, 207, 102, 0.45);
 }
 
+.gk-patch {
+  color: #d29ef6;
+  background: rgba(210, 158, 246, 0.12);
+  border-color: rgba(210, 158, 246, 0.45);
+}
+
 .gk-api-meta {
   font-size: 0.85rem;
   color: var(--nextra-text-color, #aaa);

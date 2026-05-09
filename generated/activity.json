@@ -1,9 +1,136 @@
 {
-  "generatedAt": "2026-03-27T10:42:07.663Z",
+  "generatedAt": "2026-05-09T15:48:17.704Z",
   "days": [
+    {
+      "date": "2026-04-14",
+      "commits": [
+        {
+          "hash": "4c4f4c90894e5023a73789b040e2d84e7cbc89eb",
+          "shortHash": "4c4f4c9",
+          "subject": "docs: slim EC2 section — core fields + Docker/network/volume only",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-14 03:49:25 +0530"
+        },
+        {
+          "hash": "74daa5160ae810b186e4f1ddcb2bc26452c9239c",
+          "shortHash": "74daa51",
+          "subject": "docs: align EC2 type RAM wording, emphasize 3 containers running",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-14 01:35:27 +0530"
+        },
+        {
+          "hash": "588535674f2d6bd980de6fcd16e026a75944a2ba",
+          "shortHash": "5885356",
+          "subject": "docs: update EC2 details (t3.small, new IP, instance ID, schedule, volumes)",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-14 01:29:20 +0530"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-08",
+      "commits": [
+        {
+          "hash": "8026af6233c0ed3b1b5ef87204956669dd11467b",
+          "shortHash": "8026af6",
+          "subject": "simplify diagram: monochrome dark palette, single blue accent for data path",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 01:50:58 +0530"
+        },
+        {
+          "hash": "b77bb0ba5230d3f71ce49ccc0cadaa5ca40aeff4",
+          "shortHash": "b77bb0b",
+          "subject": "refine architecture diagram: muted palette, uniform node fills, cleaner look",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 01:37:05 +0530"
+        },
+        {
+          "hash": "7b17db41e5cda5090e31bf2d5957fa904753eb74",
+          "shortHash": "7b17db4",
+          "subject": "redesign architecture diagram: dark theme, 5 swimlanes, richer colours",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 01:28:50 +0530"
+        },
+        {
+          "hash": "3940e994e8ee4ac31d54ccf5069283e19bf73dcc",
+          "shortHash": "3940e99",
+          "subject": "fix architecture diagram: inline SVG React component, no basePath issue",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 01:20:49 +0530"
+        },
+        {
+          "hash": "fde97ab5889c6ef94bc5aad8f349253416ca65cb",
+          "shortHash": "fde97ab",
+          "subject": "replace iframe with self-contained SVG architecture diagram",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 01:15:32 +0530"
+        },
+        {
+          "hash": "585d152224bb786520c07477bc08cb317911bf6d",
+          "shortHash": "585d152",
+          "subject": "replace mermaid diagram with embedded draw.io viewer iframe",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 01:06:24 +0530"
+        },
+        {
+          "hash": "1bf37a4962a1d0652605e704f2d104bcdfdbe8be",
+          "shortHash": "1bf37a4",
+          "subject": "add draw.io architecture diagram and link from docs pages",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 00:56:38 +0530"
+        },
+        {
+          "hash": "8afc0992f652d52345af87a094a5d8fdbe3b25af",
+          "shortHash": "8afc099",
+          "subject": "feat: implement swimlane-style architecture diagram from draw.io XML in Mermaid",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 00:52:36 +0530"
+        },
+        {
+          "hash": "82ca43e6ce8b241a5a421e85ee99cf2a352db2af",
+          "shortHash": "82ca43e",
+          "subject": "feat: enable copy buttons (defaultShowCopyCode), simplify architecture diagram and EC2 table",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 00:39:13 +0530"
+        },
+        {
+          "hash": "5b25ebf433cc0cddda0f80d1cb8ee20aafa93b7a",
+          "shortHash": "5b25ebf",
+          "subject": "docs: improve architecture diagram with EC2 subgraph + add real instance details table",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 00:32:49 +0530"
+        },
+        {
+          "hash": "68fa588f608536593b777b6623a37a7a09855972",
+          "shortHash": "68fa588",
+          "subject": "docs: update infra, getting-started, and index for EC2 deployment with MariaDB and Docker",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-08 00:11:35 +0530"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-07",
+      "commits": [
+        {
+          "hash": "93744d0797913c73ae7efb7c910d23fdf6a9f607",
+          "shortHash": "93744d0",
+          "subject": "docs: update all pages for JWT auth, Spring Security, and admin seeding",
+          "author": "ankit6.pandey",
+          "iso": "2026-04-07 01:02:51 +0530"
+        }
+      ]
+    },
     {
       "date": "2026-03-27",
       "commits": [
+        {
+          "hash": "e75e5c9818e689cbe84a3d7fe9733e2d30d25c69",
+          "shortHash": "e75e5c9",
+          "subject": "Replace broken architecture image with native GoToKart diagram.",
+          "author": "ankit6.pandey",
+          "iso": "2026-03-27 16:14:11 +0530"
+        },
         {
           "hash": "79e0bf68b221c1273995f43c6f8e636f77fff84c",
           "shortHash": "79e0bf6",

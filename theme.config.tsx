@@ -52,7 +52,18 @@ const config: DocsThemeConfig = {
   head: (
     <>
       <meta name="theme-color" content="#0a0a0f" />
-      <meta name="description" content="GoToKart — e-commerce platform documentation" />
+      <meta
+        name="description"
+        content="GoToKart — Spring Boot + vanilla JS e-commerce platform on AWS EC2 with S3-backed product images and Let's Encrypt HTTPS. Architecture, API reference, and runbook."
+      />
+      <meta property="og:title" content="GoToKart documentation" />
+      <meta
+        property="og:description"
+        content="Live at gotokart.xyz — Spring Boot API, vanilla JS storefront, AWS EC2 + S3 + Let's Encrypt."
+      />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://gotokart.github.io/docs/" />
+      <meta name="twitter:card" content="summary_large_image" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link

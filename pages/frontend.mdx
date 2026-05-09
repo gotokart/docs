@@ -1,21 +1,24 @@
 # Frontend
 
-The storefront is a **single-page** experience built with **HTML, CSS, and JavaScript** (no framework). It talks to the backend REST API using **JWT authentication**.
+The storefront is a **single-page** experience built with **HTML, CSS, and JavaScript** — no framework, no build step. It talks to the backend REST API using **JWT authentication** and uploads product images directly to **AWS S3** using presigned URLs.
 
 ## Files
 
-- `index.html` — layout and sections (hero, auth, shop, cart, orders, admin panel)
-- `style.css` — dark luxury theme (gold accents, responsive layout)
-- `script.js` — API calls, JWT auth, UI state, and rendering
+| File | Role |
+|------|------|
+| `index.html` | Layout — hero, auth, shop, cart, orders, admin panel, the new file-input on the admin form |
+| `style.css`  | Dark luxury theme (gold accents, responsive layout) including `.product-image` styles |
+| `script.js`  | API calls, JWT auth, three-step S3 upload, UI state, rendering with image / emoji fallback |
 
 ## API base URL
 
 ```javascript
-// script.js — top of file
-const API = 'http://localhost:8080/api';
+const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:8080/api'
+  : '/api';
 ```
 
-Change this one constant to point at your deployed API.
+When deployed under nginx (`gotokart.xyz`), the relative `/api` path is reverse-proxied to the backend container. Locally, it points straight at Spring Boot on port 8080.
 
 ## Authentication
 
@@ -25,20 +28,87 @@ The frontend uses **JWT tokens** stored in `localStorage` (`gk_token`).
 - `POST /api/auth/register` — register, receives JWT
 - `GET /api/users/me` — fetch own profile after login
 - Session is automatically restored from `localStorage` on page reload
-- All admin requests include `Authorization: Bearer <token>` via `authHeaders()`
+- Admin requests include `Authorization: Bearer <token>` via a small `authHeaders()` helper
 
-**Default admin account:**
+**Default admin account**
+
 - Email: `admin@gotokart.com`
 - Password: `admin123`
 
 ## Features (overview)
 
 - Register / login / logout with JWT session persistence
-- Admin panel visible only to users with `ADMIN` role
+- Admin panel visible only to users with the `ADMIN` role
 - Product listing with search, filters, sorting, and category tags
-- Auto emoji detection for 150+ product types
-- Admin-only: add product (with category dropdown) and delete product
+- Auto emoji detection for 150+ product types (used as a fallback when there's no image)
+- **Admin-only image upload to S3 via presigned PUT** (max 1 MB · JPG / PNG / WEBP)
 - Cart with quantity stepper and real-time totals
 - Place order and view order history with expandable details
 
-For full details, see the [frontend README](https://github.com/gotokart/frontend/blob/main/README.md).
+---
+
+<a id="image-upload-flow"></a>
+## Image upload flow
+
+The browser does the heavy lifting. The backend only signs URLs.
+
+```text
+[Admin form submit]
+       │
+       │ 1. POST /api/products            ──▶ { id, name, … }
+       │
+       │ 2. POST /api/products/{id}/image-upload-url?contentType=image/png
+       │                                   ──▶ { url, key, contentType, publicUrl, … }
+       │
+       │ 3. PUT <url>   Content-Type: image/png   body=fileBytes
+       │     (CORS preflight goes straight to S3, never touches the API)
+       │                                   ◀── 200 OK
+       │
+       │ 4. PATCH /api/products/{id}/image   { imageKey: key }
+       │                                   ──▶ updated product (old S3 object deleted)
+       ▼
+   product card now shows <img src="publicUrl"/>
+```
+
+### Why this pattern?
+
+- **No JVM bytes** — Spring Boot never sees the image, so we don't pay memory, time, or bandwidth for them.
+- **Short-lived URLs** — every upload uses a fresh URL that expires in 5 minutes, signed by the backend's IAM role.
+- **Strict content type** — the backend signs against the exact MIME type the client claims, and S3 rejects the PUT if the request header doesn't match.
+- **Old image cleanup** — `PATCH /api/products/{id}/image` and `DELETE /api/products/{id}` both clean up the previous S3 object so you never accumulate orphans.
+
+### Rendering
+
+`script.js` exports two small helpers:
+
+```javascript
+function productImageUrl(p) {
+  if (!p?.imageKey) return null;
+  return `https://${BUCKET}.s3.${REGION}.amazonaws.com/${p.imageKey}`;
+}
+
+function productVisual(p) {
+  const url = productImageUrl(p);
+  return url
+    ? `<img class="product-image" src="${url}" alt="${escapeHtml(p.name)}" loading="lazy"/>`
+    : `<div class="product-emoji">${categoryEmoji(p)}</div>`;
+}
+```
+
+If `imageKey` is missing, the storefront falls back to the category emoji — the user never sees a broken image.
+
+### Admin form
+
+```html
+<div class="form-group" style="grid-column:1/-1">
+  <label>Product Image (optional, max 1 MB — JPG / PNG / WEBP)</label>
+  <input type="file" id="pImage" accept="image/jpeg,image/png,image/webp" class="input"/>
+  <small>Uploaded directly to AWS S3 via a presigned URL.</small>
+</div>
+```
+
+`addProduct()` saves the product first, then — if a file was selected — calls `uploadProductImage(savedId, file)` which performs steps 2–4 above.
+
+---
+
+For full details, see the [frontend repository](https://github.com/gotokart/frontend) and [Backend API → Product images](backend#images).

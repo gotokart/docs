@@ -2,72 +2,98 @@ import ArchitectureDiagram from '../components/ArchitectureDiagram'
 
 # GoToKart documentation
 
-Welcome to the official docs for [GoToKart](https://github.com/gotokart), covering product architecture, APIs, deployment, and project activity in one place.
+Welcome to the official docs for [GoToKart](https://github.com/gotokart) — a small, opinionated e-commerce platform with a Spring Boot API, vanilla JS storefront, and a real production deployment on AWS. These pages cover the architecture, the API surface, the deployment pipeline, and the day-to-day operations runbook.
 
 <div className="gk-hero">
-  <span className="gk-hero-eyebrow">Official platform docs</span>
-  <h2>Build, Ship, and Track GoToKart</h2>
-  <p>Everything you need for API understanding, deployment flow, and docs activity in one place.</p>
+  <span className="gk-hero-eyebrow">Live · HTTPS · S3-backed</span>
+  <h2>Build, ship, and operate GoToKart</h2>
+  <p>One platform, three repos, one EC2 box. Docker compose underneath, Let's Encrypt on top, and S3 presigned URLs for product imagery.</p>
   <div className="gk-stat-row">
-    <span className="gk-stat">Spring Boot Backend</span>
-    <span className="gk-stat">JWT Authentication</span>
-    <span className="gk-stat">Vanilla JS Frontend</span>
-    <span className="gk-stat">AWS EC2 Deployed</span>
-    <span className="gk-stat">MariaDB + Docker</span>
-    <span className="gk-stat">102 Products Seeded</span>
+    <span className="gk-stat">Spring Boot 3.4 · Java 21</span>
+    <span className="gk-stat">JWT + BCrypt</span>
+    <span className="gk-stat">Vanilla JS storefront</span>
+    <span className="gk-stat">AWS EC2 + Docker</span>
+    <span className="gk-stat">MariaDB 10.11</span>
+    <span className="gk-stat">S3 presigned uploads</span>
+    <span className="gk-stat">Let's Encrypt TLS</span>
+    <span className="gk-stat">102 products seeded</span>
   </div>
   <div className="gk-cta-grid">
-    <a className="gk-cta" href="http://34.229.50.171" target="_blank" rel="noreferrer">
+    <a className="gk-cta" href="https://gotokart.xyz" target="_blank" rel="noreferrer">
       <span className="gk-kicker">Live</span>
-      <span className="gk-title">GoToKart Live Store</span>
+      <span className="gk-title">gotokart.xyz</span>
+    </a>
+    <a className="gk-cta" href="getting-started/" rel="noreferrer">
+      <span className="gk-kicker">Run it</span>
+      <span className="gk-title">Getting started</span>
     </a>
     <a className="gk-cta" href="backend/" rel="noreferrer">
       <span className="gk-kicker">API</span>
-      <span className="gk-title">Backend Guide</span>
+      <span className="gk-title">Backend reference</span>
     </a>
-    <a className="gk-cta" href="activity/" rel="noreferrer">
-      <span className="gk-kicker">Timeline</span>
-      <span className="gk-title">Commit Activity</span>
+    <a className="gk-cta" href="infrastructure/" rel="noreferrer">
+      <span className="gk-kicker">Ops</span>
+      <span className="gk-title">Infrastructure</span>
     </a>
   </div>
 </div>
 
-## Repositories in organization
+## Repositories in the organization
 
 <div className="gk-repo-grid">
   <div className="gk-repo-card">
     <strong>backend</strong>
-    <p>Spring Boot REST API for users, products, cart, and orders.</p>
+    <p>Spring Boot REST API for users, products, cart, orders, and S3-backed product imagery.</p>
     <a href="https://github.com/gotokart/backend" target="_blank" rel="noreferrer">Open repository →</a>
   </div>
   <div className="gk-repo-card">
     <strong>frontend</strong>
-    <p>Vanilla HTML/CSS/JS storefront deployed on GitHub Pages.</p>
+    <p>Vanilla HTML/CSS/JS storefront. Talks to <code>/api</code> over HTTPS, uploads images directly to S3 via presigned URLs.</p>
     <a href="https://github.com/gotokart/frontend" target="_blank" rel="noreferrer">Open repository →</a>
   </div>
   <div className="gk-repo-card">
     <strong>infra</strong>
-    <p>Infra notes, deployment mapping, and environment reference.</p>
+    <p>Docker Compose, nginx vhost (HTTP→HTTPS), TLS via Let's Encrypt webroot, S3 CORS reference, certbot renew unit.</p>
     <a href="https://github.com/gotokart/infra" target="_blank" rel="noreferrer">Open repository →</a>
   </div>
   <div className="gk-repo-card">
-    <strong>.github</strong>
-    <p>Shared CI/CD workflows used to build and deploy services/docs.</p>
-    <a href="https://github.com/gotokart/.github" target="_blank" rel="noreferrer">Open repository →</a>
-  </div>
-  <div className="gk-repo-card">
     <strong>docs</strong>
-    <p>Project documentation site with architecture, API guides, and activity timeline.</p>
+    <p>This site — architecture, API guides, and a generated commit-activity timeline.</p>
     <a href="https://github.com/gotokart/docs" target="_blank" rel="noreferrer">Open repository →</a>
   </div>
+  <div className="gk-repo-card">
+    <strong>.github</strong>
+    <p>Shared CI/CD workflows used to build and deploy services and docs.</p>
+    <a href="https://github.com/gotokart/.github" target="_blank" rel="noreferrer">Open repository →</a>
+  </div>
 </div>
+
+## How a request flows
+
+```text
+Browser  ──HTTPS──▶  nginx :443      (Let's Encrypt cert)
+                     │
+            ┌────────┴────────┐
+            ▼                 ▼
+    static files         /api/*  ──▶  Spring Boot :8080  ──▶  MariaDB :3306
+                                          │
+                                          │ presign PUT (IAM role)
+                                          ▼
+                                  S3 (us-east-1)
+                                  bucket: gotokart-product-images-…
+                                          │
+                                          ▼  GET (public read on products/*)
+                                       <img src="…">
+```
+
+Bytes for product images **never traverse the JVM**. The backend signs short-lived PUT URLs; the browser uploads straight to S3.
 
 ## High-level architecture
 
 <ArchitectureDiagram />
 
 <p style={{fontSize:"0.8rem",color:"#6b7280",marginTop:"0.4rem"}}>
-  Swimlane diagram — colour-coded by tier (Client → Source → Runtime → Deploy). &nbsp;
+  Swimlane diagram — Client → Source → CI/CD → Runtime → AWS managed → Deploy. &nbsp;
   <a href="https://github.com/gotokart/docs/blob/main/diagrams/architecture.drawio" target="_blank" rel="noreferrer">Open editable .drawio source →</a>
 </p>
 
@@ -76,19 +102,19 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart), coveri
 <div className="gk-next-grid">
   <a className="gk-next-card" href="getting-started/">
     <strong>Getting started</strong>
-    <span>Clone repos and run everything locally.</span>
+    <span>Clone the repos and run everything locally with Docker.</span>
   </a>
   <a className="gk-next-card" href="backend/">
     <strong>Backend API</strong>
-    <span>Endpoint reference with examples and usage tips.</span>
+    <span>Endpoint reference, JWT flow, S3 image upload routes.</span>
   </a>
   <a className="gk-next-card" href="frontend/">
     <strong>Frontend</strong>
-    <span>UI structure, integration points, and behavior notes.</span>
+    <span>UI structure, three-step S3 upload, image rendering fallback.</span>
   </a>
   <a className="gk-next-card" href="infrastructure/">
     <strong>Infrastructure</strong>
-    <span>Domains, CI/CD, deployment map, and runtime flow.</span>
+    <span>EC2, Docker, HTTPS via Let's Encrypt, S3 + IAM, runbook.</span>
   </a>
   <a className="gk-next-card" href="activity/">
     <strong>Commit activity</strong>

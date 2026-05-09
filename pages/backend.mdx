@@ -1,16 +1,21 @@
 # Backend API
 
-GoToKart backend is a **Spring Boot** application exposing REST APIs for authentication, users, products, shopping cart, and orders, backed by **MySQL** and secured with **JWT**.
+GoToKart's backend is a **Spring Boot 3.4** application exposing REST APIs for authentication, users, products, shopping cart, orders, and S3-backed product imagery. It is backed by **MariaDB / MySQL** and secured with **JWT**.
 
 ## Stack
 
-- Java 21 · Spring Boot 3.x · Spring Security · Spring Data JPA · JJWT 0.11.5 · BCrypt · Maven
+- Java 21 · Spring Boot 3.4 · Spring Security · Spring Data JPA
+- JJWT 0.11.5 · BCrypt · Maven
+- AWS SDK for Java v2 (`software.amazon.awssdk:s3` + `S3Presigner`)
 
 ## Base URL
 
-`http://localhost:8080/api`
+| Environment | Base |
+|-------------|------|
+| Production  | <code>https://gotokart.xyz/api</code> |
+| Local       | <code>http://localhost:8080/api</code> |
 
-For deployed environments, replace the host with your production API domain.
+The frontend autodetects which one to use; you only ever change it in one place if you're embedding the API elsewhere.
 
 ## Quick jump
 
@@ -18,6 +23,7 @@ For deployed environments, replace the host with your production API domain.
   <a className="gk-chip" href="#auth">Auth</a>
   <a className="gk-chip" href="#users">Users</a>
   <a className="gk-chip" href="#products">Products</a>
+  <a className="gk-chip" href="#images">Product images</a>
   <a className="gk-chip" href="#cart">Cart</a>
   <a className="gk-chip" href="#orders">Orders</a>
 </div>
@@ -26,19 +32,23 @@ For deployed environments, replace the host with your production API domain.
 
 <div className="gk-api-card">
   <span className="gk-method gk-post">POST</span><code>/api/auth/login</code>
-  <p className="gk-api-meta">Use case: user login · Auth: no · Returns JWT token + user profile.</p>
-</div>
-<div className="gk-api-card">
-  <span className="gk-method gk-post">POST</span><code>/api/auth/register</code>
-  <p className="gk-api-meta">Use case: new user signup · Auth: no · Returns JWT token + user profile.</p>
+  <p className="gk-api-meta">User login · Auth: no · Returns JWT + user profile.</p>
 </div>
 <div className="gk-api-card">
   <span className="gk-method gk-get">GET</span><code>/api/products</code>
-  <p className="gk-api-meta">Use case: storefront listing · Auth: no · Returns all 102+ seeded products.</p>
+  <p className="gk-api-meta">Storefront listing · Auth: no · Returns 102+ seeded products with optional <code>imageKey</code>.</p>
+</div>
+<div className="gk-api-card">
+  <span className="gk-method gk-post">POST</span><code>/api/products/&#123;id&#125;/image-upload-url</code>
+  <p className="gk-api-meta">Mint a short-lived S3 presigned PUT · Auth: ADMIN.</p>
+</div>
+<div className="gk-api-card">
+  <span className="gk-method gk-patch">PATCH</span><code>/api/products/&#123;id&#125;/image</code>
+  <p className="gk-api-meta">Attach uploaded S3 key to a product · Auth: ADMIN · Cleans up old object.</p>
 </div>
 <div className="gk-api-card">
   <span className="gk-method gk-post">POST</span><code>/api/orders/&#123;userId&#125;/place</code>
-  <p className="gk-api-meta">Use case: checkout · Auth: user context · Triggers stock update + cart clear.</p>
+  <p className="gk-api-meta">Checkout · Auth: user context · Triggers stock update + cart clear.</p>
 </div>
 
 ---
@@ -60,7 +70,7 @@ The admin account is created automatically on backend startup if it does not exi
 
 ### Using JWT in requests
 
-After login, include the token in every admin request:
+After login, include the token on every admin request:
 
 ```
 Authorization: Bearer <your-jwt-token>
@@ -72,7 +82,7 @@ Authorization: Bearer <your-jwt-token>
 |--------|------|:---:|-------------|
 | `POST` | `/api/auth/login` | No | Login, returns JWT |
 | `POST` | `/api/auth/register` | No | Register, returns JWT |
-| `GET` | `/api/users/me` | JWT | Get current user profile |
+| `GET`  | `/api/users/me`   | JWT | Get current user profile |
 
 <details>
 <summary><strong>POST</strong> <code>/api/auth/login</code> — login</summary>
@@ -112,7 +122,7 @@ Authorization: Bearer <your-jwt-token>
 }
 ```
 
-**Response** — same shape as login response, with `role: "USER"`.
+**Response** — same shape as login, with `role: "USER"`.
 </details>
 
 ---
@@ -122,9 +132,9 @@ Authorization: Bearer <your-jwt-token>
 
 | Method | Path | Auth | Description |
 |--------|------|:---:|-------------|
-| `GET` | `/api/users/me` | JWT | Get own profile |
-| `GET` | `/api/users` | No | List all users |
-| `GET` | `/api/users/{id}` | No | Get user by ID |
+| `GET`  | `/api/users/me`     | JWT | Get own profile |
+| `GET`  | `/api/users`        | No  | List all users |
+| `GET`  | `/api/users/{id}`   | No  | Get user by ID |
 
 ---
 
@@ -133,14 +143,16 @@ Authorization: Bearer <your-jwt-token>
 
 | Method | Path | Auth | Description |
 |--------|------|:---:|-------------|
-| `GET` | `/api/products` | No | List all products |
-| `GET` | `/api/products/{id}` | No | Get product by ID |
-| `POST` | `/api/products` | ADMIN JWT | Create product (merges stock if name exists) |
-| `PUT` | `/api/products/{id}` | ADMIN JWT | Update product |
-| `DELETE` | `/api/products/{id}` | ADMIN JWT | Delete product |
+| `GET`    | `/api/products`        | No        | List all products (optionally with `imageKey`) |
+| `GET`    | `/api/products/{id}`   | No        | Get product by ID |
+| `POST`   | `/api/products`        | ADMIN JWT | Create product (merges stock if name exists) |
+| `PUT`    | `/api/products/{id}`   | ADMIN JWT | Update product fields |
+| `DELETE` | `/api/products/{id}`   | ADMIN JWT | Delete product (also deletes its S3 image) |
+
+The `Product` entity now carries an `imageKey` field — the S3 object key under the bucket's `products/` prefix. It is optional; products without an image render with a category emoji on the frontend.
 
 <details>
-<summary><strong>POST</strong> <code>/api/products</code> — create product</summary>
+<summary><strong>POST</strong> <code>/api/products</code> — create or merge product</summary>
 
 **Request headers**
 
@@ -161,10 +173,11 @@ Content-Type: application/json
 }
 ```
 
-**Helpful note**
+**Notes**
 
-- If a product with the same name already exists, backend merges/increases stock instead of creating a duplicate row.
+- If a product with the same name already exists, the backend merges/increases stock instead of creating a duplicate row.
 - Returns `403 Forbidden` if the `Authorization` header is missing or the user is not `ADMIN`.
+- This endpoint does **not** accept an image. Upload it separately — see [Product images](#images).
 </details>
 
 <details>
@@ -176,10 +189,82 @@ Content-Type: application/json
 Authorization: Bearer <admin-jwt-token>
 ```
 
-**Helpful note**
+**Notes**
 
-- Ask for explicit confirmation in frontend before calling delete.
+- The S3 object referenced by `imageKey` is deleted as part of this call. If the delete fails (network blip, IAM hiccup) the product still goes — the image is best-effort cleanup.
+- If the product is the last one in its category, the category is also removed.
+- Ask for explicit confirmation in the frontend before calling this.
 </details>
+
+---
+
+<a id="images"></a>
+## Product images (S3 presigned uploads)
+
+Image bytes never travel through the JVM. The browser uploads straight to S3 using a short-lived presigned PUT URL minted by the backend.
+
+```text
+1. POST /api/products              → product { id }
+2. POST /api/products/{id}/image-upload-url?contentType=image/png
+                                   → { url, key, contentType, expiresInSeconds, publicUrl }
+3. PUT  url   (Content-Type: image/png, body = file bytes)        ← straight to S3
+4. PATCH /api/products/{id}/image  body { imageKey: key }
+```
+
+| Method | Path | Auth | Description |
+|--------|------|:---:|-------------|
+| `POST`  | `/api/products/{id}/image-upload-url?contentType=…` | ADMIN JWT | Mint presigned PUT URL |
+| `PATCH` | `/api/products/{id}/image`                          | ADMIN JWT | Attach uploaded key to product (also deletes the prior object) |
+
+**Allowed content types:** `image/jpeg`, `image/jpg`, `image/png`, `image/webp`.
+The backend validates the type, picks the correct extension, and generates a UUID-based key under `products/`.
+
+<details>
+<summary><strong>POST</strong> <code>/api/products/&#123;id&#125;/image-upload-url?contentType=image/png</code></summary>
+
+**Response**
+
+```json
+{
+  "url": "https://gotokart-product-images-…s3.us-east-1.amazonaws.com/products/3b55…ff.png?X-Amz-…",
+  "key": "products/3b55d705-53f8-4b87-b664-4fa85824dcff.png",
+  "contentType": "image/png",
+  "expiresInSeconds": 300,
+  "publicUrl": "https://gotokart-product-images-…s3.us-east-1.amazonaws.com/products/3b55…ff.png"
+}
+```
+
+**Notes**
+
+- The signed URL is bound to the exact `Content-Type` you sent. The browser must `PUT` with the same header or S3 will reject it.
+- The URL targets the **regional** S3 endpoint (`s3.us-east-1.amazonaws.com`) on purpose — the global endpoint redirects, and browsers fail CORS preflights on redirects.
+- Default lifetime is **300 seconds**. Tune via the `aws.s3.presign-ttl-seconds` property.
+</details>
+
+<details>
+<summary><strong>PATCH</strong> <code>/api/products/&#123;id&#125;/image</code></summary>
+
+**Request body**
+
+```json
+{ "imageKey": "products/3b55d705-53f8-4b87-b664-4fa85824dcff.png" }
+```
+
+**Notes**
+
+- If the product previously had a different `imageKey`, the old object is deleted from S3 after the row is saved.
+- Pass `imageKey: null` (or empty string) to remove the image without uploading a new one.
+</details>
+
+#### Public read URL
+
+Objects under `products/*` are publicly readable thanks to a bucket policy. The frontend constructs the public URL itself:
+
+```text
+https://<bucket>.s3.<region>.amazonaws.com/<imageKey>
+```
+
+If you set `aws.s3.public-base-url` (e.g. a CloudFront distribution), the backend uses that prefix instead.
 
 ---
 
@@ -188,12 +273,12 @@ Authorization: Bearer <admin-jwt-token>
 
 | Method | Path | Auth | Description |
 |--------|------|:---:|-------------|
-| `GET` | `/api/cart/{userId}` | No | Cart for user |
-| `POST` | `/api/cart/{userId}/add?productId=&quantity=` | No | Add item |
-| `DELETE` | `/api/cart/{userId}/remove?productId=` | No | Remove item |
+| `GET`    | `/api/cart/{userId}`                              | No | Cart for user |
+| `POST`   | `/api/cart/{userId}/add?productId=&quantity=`     | No | Add item |
+| `DELETE` | `/api/cart/{userId}/remove?productId=`            | No | Remove item |
 
 <details>
-<summary><strong>POST</strong> <code>/api/cart/&#123;userId&#125;/add?productId=&amp;quantity=</code> — add to cart</summary>
+<summary><strong>POST</strong> <code>/api/cart/&#123;userId&#125;/add?productId=&amp;quantity=</code></summary>
 
 **Example**
 
@@ -201,9 +286,7 @@ Authorization: Bearer <admin-jwt-token>
 /api/cart/1/add?productId=2&quantity=3
 ```
 
-**Helpful note**
-
-- Clamp quantity on the UI side so users cannot submit 0 or negative values.
+**Note** — clamp quantity on the UI side so users cannot submit 0 or negative values.
 </details>
 
 ---
@@ -213,11 +296,11 @@ Authorization: Bearer <admin-jwt-token>
 
 | Method | Path | Auth | Description |
 |--------|------|:---:|-------------|
-| `POST` | `/api/orders/{userId}/place` | No | Place order (clears cart, updates stock) |
-| `GET` | `/api/orders/{userId}` | No | Order history |
+| `POST` | `/api/orders/{userId}/place` | No | Place order (clears cart, decrements stock) |
+| `GET`  | `/api/orders/{userId}`       | No | Order history |
 
 <details>
-<summary><strong>POST</strong> <code>/api/orders/&#123;userId&#125;/place</code> — place order</summary>
+<summary><strong>POST</strong> <code>/api/orders/&#123;userId&#125;/place</code></summary>
 
 **Example response**
 
@@ -229,15 +312,13 @@ Authorization: Bearer <admin-jwt-token>
 }
 ```
 
-**Helpful note**
-
-- On success, immediately refresh cart and orders sections so user sees the updated state.
+**Note** — on success, immediately refresh cart and orders sections so the user sees the updated state.
 </details>
 
 ---
 
 ## Database
 
-Create a database named `gotokart` and configure JDBC URL, user, and password in `application.properties`. See the [Getting started](getting-started) guide for full examples.
+Create a database named `gotokart` and configure the JDBC URL, user, and password in `application.properties`. See [Getting started](getting-started) for full examples.
 
-On first startup, the backend automatically seeds **102 products** across 11 categories and creates the admin user.
+On first startup the backend automatically seeds **102 products** across 11 categories and creates the admin user. The schema migrates automatically (`spring.jpa.hibernate.ddl-auto=update`) — including the new `image_key` column on the `product` table.
