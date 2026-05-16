@@ -121,14 +121,14 @@ export default function ArchitectureDiagram() {
       <text x="172" y="547" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">Spring Boot :8080</text>
       <text x="172" y="566" textAnchor="middle" fontSize="10" fill="#6e7681">REST · JWT · S3 presign</text>
 
-      {/* MariaDB cylinder */}
+      {/* AWS RDS cylinder (amber = AWS managed) */}
       <rect x="468" y="528" width="192" height="52" fill="#161b22" stroke="none"/>
-      <line x1="468" y1="528" x2="468" y2="580" stroke="#3a8c52" strokeWidth="1.5"/>
-      <line x1="660" y1="528" x2="660" y2="580" stroke="#3a8c52" strokeWidth="1.5"/>
-      <ellipse cx="564" cy="580" rx="96" ry="13" fill="#161b22" stroke="#3a8c52" strokeWidth="1.5"/>
-      <ellipse cx="564" cy="528" rx="96" ry="13" fill="#1c2128" stroke="#3a8c52" strokeWidth="1.5"/>
-      <text x="564" y="552" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">MariaDB :3306</text>
-      <text x="564" y="570" textAnchor="middle" fontSize="10" fill="#6e7681">persistent store</text>
+      <line x1="468" y1="528" x2="468" y2="580" stroke="#d29922" strokeWidth="1.5"/>
+      <line x1="660" y1="528" x2="660" y2="580" stroke="#d29922" strokeWidth="1.5"/>
+      <ellipse cx="564" cy="580" rx="96" ry="13" fill="#161b22" stroke="#d29922" strokeWidth="1.5"/>
+      <ellipse cx="564" cy="528" rx="96" ry="13" fill="#1c2128" stroke="#d29922" strokeWidth="1.5"/>
+      <text x="564" y="552" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c9d1d9">AWS RDS · MySQL 8</text>
+      <text x="564" y="570" textAnchor="middle" fontSize="10" fill="#6e7681">private VPC · TLS · backups</text>
 
       {/* certbot */}
       <rect x="320" y="412" width="180" height="64" rx="6" fill="#161b22" stroke="#3a8c52" strokeWidth="1.5"/>
@@ -218,9 +218,9 @@ export default function ArchitectureDiagram() {
       <path d="M 172,476 L 172,522" stroke="#388bfd" strokeWidth="1.8" fill="none" markerEnd="url(#mb)"/>
       <text x="178" y="504" fontSize="9" fill="#388bfd">proxy /api/*</text>
 
-      {/* Spring Boot → MariaDB */}
+      {/* Spring Boot → AWS RDS (JDBC) */}
       <path d="M 272,554 L 468,554" stroke="#388bfd" strokeWidth="1.8" fill="none" markerEnd="url(#mb)"/>
-      <text x="328" y="546" fontSize="9" fill="#388bfd">JPA / SQL</text>
+      <text x="320" y="546" fontSize="9" fill="#388bfd">JDBC · VPC</text>
 
       {/* Spring Boot → IAM (assume role / get creds) */}
       <path d="M 272,540 C 540,540 540,440 820,440" stroke="#d29922" strokeWidth="1.4" fill="none" strokeDasharray="6,3" markerEnd="url(#ma)"/>

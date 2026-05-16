@@ -26,19 +26,30 @@ Full deployment reference for GoToKart on AWS EC2 — domain, TLS, Docker, S3, I
 | **Public IP**    | `52.90.87.237` (the DNS A records for `gotokart.xyz` / `www.gotokart.xyz` point here) |
 | **IAM role**     | `ec2-role-iam` — provides credentials for S3 (no static keys on the box) |
 
-### Docker — three containers
+### Docker — two containers
 
 | Role | Service | Port | Notes |
 |------|---------|------|-------|
 | Frontend | nginx (alpine) | 80 → 443 | Terminates TLS, serves static frontend, reverse-proxies `/api/*` |
-| Backend  | Spring Boot (Java 21) | internal :8080 | Signs S3 presigned URLs, talks to MariaDB |
-| Database | MariaDB 10.11 | internal :3306 | MySQL-compatible; avoids the AL2023 ioctl bug |
+| Backend  | Spring Boot (Java 21) | internal :8080 | Signs S3 presigned URLs, talks to RDS over JDBC |
 
 **Network:** `infra_gotokart-net`
-**DB volume:** `infra_mysql-data`
 **Cert volumes:** `./certs` (read-only into nginx) · `./certbot-webroot` (read-only into nginx, writable by certbot service unit)
 
-> **Why MariaDB, not MySQL?** The official `mysql:8.x` image crashes on Amazon Linux 2023's kernel (`Inappropriate ioctl for device`). MariaDB 10.11 is a drop-in replacement with no such issue.
+### Database — AWS RDS (managed)
+
+| Field | Value |
+|-------|-------|
+| Service | Amazon RDS for MySQL 8.0 |
+| Instance identifier | `gotokart-db` |
+| Endpoint | `gotokart-db.xxxxxxxx.us-east-1.rds.amazonaws.com:3306` |
+| Database name | `gotokart` |
+| App user | `gotokart_app` (granted `ALL` on `gotokart.*`) |
+| Public access | **No** — private to the VPC |
+| Encryption | At-rest (KMS) + in-transit (TLS, JDBC `useSSL=true&requireSSL=true`) |
+| Backups | Automated, 7-day retention |
+
+The backend reads the connection details from `infra/.env` (see [AWS RDS setup](#aws-rds--one-time-setup) below). There is **no database container** in production any more.
 
 ## Architecture
 
@@ -49,7 +60,7 @@ Full deployment reference for GoToKart on AWS EC2 — domain, TLS, Docker, S3, I
   <a href="https://github.com/gotokart/docs/blob/main/diagrams/architecture.drawio" target="_blank" rel="noreferrer">Open editable .drawio source →</a>
 </p>
 
-All three runtime containers sit on a single EC2 host, connected via the `infra_gotokart-net` bridge network. Only nginx is exposed to the internet (ports 80 + 443). The backend signs S3 PUT URLs using credentials supplied by the EC2 instance profile — there are no AWS access keys anywhere on disk.
+The two runtime containers sit on a single EC2 host, connected via the `infra_gotokart-net` bridge network. Only nginx is exposed to the internet (ports 80 + 443). The backend signs S3 PUT URLs using credentials supplied by the EC2 instance profile — there are no AWS access keys anywhere on disk. The database lives in **AWS RDS** and is reachable from EC2 over the private VPC network only.
 
 ---
 
@@ -170,6 +181,95 @@ Full runbook lives in `infra/certs/README.md`.
 
 ---
 
+## AWS RDS — one-time setup
+
+GoToKart's database lives in **Amazon RDS for MySQL 8.0**, not in a container. The backend connects to it over JDBC using credentials supplied by `infra/.env` on the EC2 host. RDS handles patching, backups, and storage scaling.
+
+### 1. Provision the RDS instance
+
+In the AWS Console: **RDS → Create database → Standard create**.
+
+| Setting | Value |
+|---------|-------|
+| Engine | MySQL 8.0 (latest minor) |
+| Template | Production (or Dev/Test for non-prod) |
+| DB instance identifier | `gotokart-db` |
+| Master username | `admin` (used only to create the app user below) |
+| Master password | store in a password manager |
+| Instance class | `db.t4g.micro` (sufficient for low traffic) |
+| Storage | 20 GB gp3, autoscaling enabled |
+| VPC | Same VPC as the EC2 host |
+| Public access | **No** |
+| VPC security group | new `gotokart-rds-sg` |
+| AZ | Same AZ as EC2 (lower latency, no cross-AZ charges) |
+| Initial database name | `gotokart` |
+| Backups | 7-day retention |
+| Encryption | Enabled (KMS default key) |
+
+### 2. Tighten the RDS security group
+
+`gotokart-rds-sg` inbound rules:
+
+| Type | Port | Source |
+|------|------|--------|
+| MySQL/Aurora | 3306 | The EC2 security group (`sg-xxxxxxxx`) |
+
+No public CIDRs, no `0.0.0.0/0`. Outbound rules can stay default.
+
+### 3. Create a least-privilege application user
+
+From the EC2 host (which has VPC reach to the RDS endpoint):
+
+```bash
+mysql -h gotokart-db.xxxxxxxx.us-east-1.rds.amazonaws.com -u admin -p
+```
+
+```sql
+CREATE USER 'gotokart_app'@'%' IDENTIFIED BY 'a-strong-password';
+GRANT ALL PRIVILEGES ON gotokart.* TO 'gotokart_app'@'%';
+FLUSH PRIVILEGES;
+```
+
+The backend will use `gotokart_app` exclusively. Never put the master `admin` credentials in `infra/.env`.
+
+### 4. Wire up `infra/.env`
+
+On EC2:
+
+```bash
+cd /home/ec2-user/gotokart/infra
+cp .env.example .env
+nano .env
+```
+
+Fill in `RDS_HOST`, `RDS_USERNAME`, `RDS_PASSWORD`, and `JWT_SECRET`. The compose file substitutes these into the backend container's `SPRING_DATASOURCE_URL` automatically. `infra/.env` is git-ignored (`.gitignore` already covers `.env` and `*.env`).
+
+### 5. (Optional) migrate from the old MariaDB container
+
+If you previously ran the in-container MariaDB and want to keep the data:
+
+```bash
+# On EC2, before bringing down the old stack
+docker exec gotokart-mysql mariadb-dump -uroot -pRoot@1234 gotokart > gotokart-dump.sql
+
+# Push the dump into RDS
+mysql -h gotokart-db.xxxxxxxx.us-east-1.rds.amazonaws.com -u gotokart_app -p gotokart \
+  < gotokart-dump.sql
+```
+
+Otherwise JPA's `ddl-auto=update` will create the schema on first boot and `DataInitializer` will reseed the 102 products and the admin user.
+
+### Why use RDS instead of a container
+
+- Automated daily backups + point-in-time restore.
+- Managed minor-version patching.
+- Storage autoscaling without downtime.
+- Survives EC2 instance replacement (the old volume-backed container was tied to the host filesystem).
+- TLS in transit, KMS encryption at rest.
+- Removes the AL2023/`mysql:8.x` ioctl incompatibility entirely — no more MariaDB workaround.
+
+---
+
 ## S3 — product image storage
 
 | Item | Value |
@@ -278,7 +378,7 @@ aws sts get-caller-identity
 
 You should see the role ARN, not "Unable to locate credentials".
 
-### 4. Clone repos & first deploy
+### 4. Clone repos & configure `.env`
 
 ```bash
 mkdir -p ~/gotokart && cd ~/gotokart
@@ -287,12 +387,21 @@ git clone https://github.com/gotokart/frontend.git
 git clone https://github.com/gotokart/infra.git
 
 cd infra
+cp .env.example .env
+nano .env       # set RDS_HOST, RDS_USERNAME, RDS_PASSWORD, JWT_SECRET
+```
+
+See [AWS RDS — one-time setup](#aws-rds--one-time-setup) for how to provision the database and the `gotokart_app` user before this step.
+
+### 5. First deploy
+
+```bash
 docker compose up -d --build
 ```
 
-On first startup the backend seeds **102 products** and creates the admin user.
+On first startup the backend connects to RDS, JPA creates the schema, then `DataInitializer` seeds **102 products** and creates the admin user.
 
-### 5. Issue TLS certs (see [TLS section](#tls--lets-encrypt--nginx-webroot-mode))
+### 6. Issue TLS certs (see [TLS section](#tls--lets-encrypt--nginx-webroot-mode))
 
 ---
 
@@ -332,14 +441,17 @@ docker compose build --no-cache backend && docker compose up -d backend
 ## Useful commands
 
 ```bash
-docker compose ps                                      # check all containers
+docker compose ps                                      # check containers
 docker logs -f gotokart-backend                        # backend logs live
-docker logs -f gotokart-mysql                          # MariaDB logs
-docker compose restart nginx                          # reload nginx config
+docker compose restart nginx                           # reload nginx config
 docker compose build --no-cache backend && \
   docker compose up -d backend                         # rebuild only backend
-docker compose down -v && docker compose up -d --build # full wipe + rebuild
+docker compose down && docker compose up -d --build    # safe restart — data lives in RDS
 docker system prune -af && docker builder prune -af    # reclaim disk space
+
+# Talk to RDS from the EC2 host (mariadb105 RPM ships the mysql CLI on AL2023)
+source infra/.env
+mysql -h "$RDS_HOST" -u "$RDS_USERNAME" -p"$RDS_PASSWORD" "$RDS_DB_NAME"
 
 sudo systemctl list-timers | grep gotokart             # next renewal run
 sudo journalctl -u gotokart-cert-renew.service -n 50   # last renewal log
@@ -354,6 +466,8 @@ sudo journalctl -u gotokart-cert-renew.service -n 50   # last renewal log
 | SSH   | 22   | Your IP      | Management |
 | HTTP  | 80   | 0.0.0.0/0    | ACME challenge + redirect to HTTPS |
 | HTTPS | 443  | 0.0.0.0/0    | Production traffic |
+
+The EC2 SG ID must also appear as the **source** in the inbound MySQL rule of `gotokart-rds-sg`. The RDS instance itself has no public endpoint.
 
 ---
 

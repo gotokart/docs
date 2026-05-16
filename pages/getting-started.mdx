@@ -39,7 +39,9 @@ cp .env.example .env          # one-time
 docker compose -f docker-compose.local.yml up --build
 ```
 
-This starts MariaDB, the Spring Boot backend, and nginx serving the static frontend at <code>http://localhost</code>. The local compose file does **not** terminate TLS — it speaks plain HTTP on port 80 because there's no domain to certificate.
+This starts a throwaway **MySQL 8** container, the Spring Boot backend, and nginx serving the static frontend at <code>http://localhost</code>. The local compose file does **not** terminate TLS — it speaks plain HTTP on port 80 because there's no domain to certificate.
+
+> **Production uses AWS RDS instead.** `docker-compose.local.yml` keeps a containerized database for cheap local development, but `docker-compose.yaml` (production on EC2) talks to AWS RDS for MySQL — see [Infrastructure → AWS RDS](infrastructure#aws-rds--one-time-setup).
 
 #### AWS credentials for local image uploads
 

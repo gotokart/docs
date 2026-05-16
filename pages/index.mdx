@@ -13,7 +13,7 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart) — a s
     <span className="gk-stat">JWT + BCrypt</span>
     <span className="gk-stat">Vanilla JS storefront</span>
     <span className="gk-stat">AWS EC2 + Docker</span>
-    <span className="gk-stat">MariaDB 10.11</span>
+    <span className="gk-stat">AWS RDS · MySQL 8</span>
     <span className="gk-stat">S3 presigned uploads</span>
     <span className="gk-stat">Let's Encrypt TLS</span>
     <span className="gk-stat">102 products seeded</span>
@@ -75,8 +75,8 @@ Browser  ──HTTPS──▶  nginx :443      (Let's Encrypt cert)
                      │
             ┌────────┴────────┐
             ▼                 ▼
-    static files         /api/*  ──▶  Spring Boot :8080  ──▶  MariaDB :3306
-                                          │
+    static files         /api/*  ──▶  Spring Boot :8080  ──JDBC──▶  AWS RDS · MySQL 8
+                                          │                           (private VPC, TLS)
                                           │ presign PUT (IAM role)
                                           ▼
                                   S3 (us-east-1)
