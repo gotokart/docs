@@ -3,6 +3,7 @@
   "getting-started": "Getting started",
   "backend": "Backend API",
   "frontend": "Frontend",
+  "notifications": "Auth, email & notifications",
   "infrastructure": "Infrastructure",
   "activity": "Commit activity"
 }

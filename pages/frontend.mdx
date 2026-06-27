@@ -6,44 +6,60 @@ The storefront is a **single-page** experience built with **HTML, CSS, and JavaS
 
 | File | Role |
 |------|------|
-| `index.html` | Layout — hero, auth, shop, cart, orders, admin panel, the new file-input on the admin form |
-| `style.css`  | Dark luxury theme (gold accents, responsive layout) including `.product-image` styles |
-| `script.js`  | API calls, JWT auth, three-step S3 upload, UI state, rendering with image / emoji fallback |
+| `index.html` | Layout — hero, OTP/admin auth card, shop, cart, orders, admin panel, file-input on the admin form |
+| `style.css`  | Dark luxury theme (gold accents, responsive layout), branded auth card, status badges |
+| `script.js`  | API calls, OTP + admin auth, `IS_ADMIN_SITE` gating, three-step S3 upload, UI state, image/emoji fallback |
 
 ## API base URL
 
 ```javascript
-const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+const API = (location.protocol === 'file:' || location.port === '5500' || location.port === '3000')
   ? 'http://localhost:8080/api'
   : '/api';
 ```
 
-When deployed under nginx (`gotokart.xyz`), the relative `/api` path is reverse-proxied to the backend container. Locally, it points straight at Spring Boot on port 8080.
+When deployed under nginx (`gotokart.xyz` / `admin.gotokart.xyz`), the relative `/api` path is reverse-proxied to the backend container. Locally (Live Server / file), it points straight at Spring Boot on port 8080.
+
+## One app, two domains
+
+The same SPA is served on both the storefront and the admin domain. A single flag drives the difference:
+
+```javascript
+const IS_ADMIN_SITE = location.hostname.startsWith('admin.');
+```
+
+- **`gotokart.xyz`** — storefront. Login is **email OTP**. The admin panel and its nav links are always hidden, even for `ADMIN` accounts.
+- **`admin.gotokart.xyz`** — admin only. Login is **email + password** via `/api/auth/admin/login`; non-admins are rejected and the storefront nav is stripped.
 
 ## Authentication
 
 The frontend uses **JWT tokens** stored in `localStorage` (`gk_token`).
 
-- `POST /api/auth/login` — login, receives JWT
-- `POST /api/auth/register` — register, receives JWT
-- `GET /api/users/me` — fetch own profile after login
-- Session is automatically restored from `localStorage` on page reload
-- Admin requests include `Authorization: Bearer <token>` via a small `authHeaders()` helper
+**Customer OTP login (storefront)** — a two-step, passwordless flow:
+
+1. `POST /api/auth/otp/request` `{ email }` — emails a 6-digit code
+2. `POST /api/auth/otp/verify` `{ email, otp, name? }` — verifies and returns a JWT
+
+**Admin login (admin domain)** — `POST /api/auth/admin/login` `{ email, password }`.
+
+- Session is automatically restored from `localStorage` on page reload (`GET /api/users/me`).
+- Requests include `Authorization: Bearer <token>` via a small `authHeaders()` helper.
 
 **Default admin account**
 
-- Email: `admin@gotokart.com`
+- Email: `admin@gotokart.xyz`
 - Password: `admin123`
 
 ## Features (overview)
 
-- Register / login / logout with JWT session persistence
-- Admin panel visible only to users with the `ADMIN` role
+- Passwordless **email OTP** login with resend cooldown; polished, branded auth card
+- Dedicated **admin domain** (`admin.gotokart.xyz`); admin panel never appears on the storefront
 - Product listing with search, filters, sorting, and category tags
 - Auto emoji detection for 150+ product types (used as a fallback when there's no image)
 - **Admin-only image upload to S3 via presigned PUT** (max 1 MB · JPG / PNG / WEBP)
 - Cart with quantity stepper and real-time totals
-- Place order and view order history with expandable details
+- Place order and view order history; admins manage status (`Placed → Shipped → Out for delivery → Delivered`)
+- A **Test Email** button in the admin dashboard to verify SMTP delivery
 
 ---
 

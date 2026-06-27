@@ -1,0 +1,100 @@
+# Auth, email & notifications
+
+GoToKart now supports **passwordless email OTP login** for customers, a **dedicated admin domain**, and **transactional email** (login codes + order/admin notifications) delivered through **Brevo SMTP**.
+
+## At a glance
+
+<div className="gk-repo-grid">
+  <div className="gk-repo-card">
+    <strong>OTP login</strong>
+    <p>Customers sign in with a 6-digit code emailed to them — no password. New emails are auto-registered.</p>
+  </div>
+  <div className="gk-repo-card">
+    <strong>Admin domain</strong>
+    <p><code>admin.gotokart.xyz</code> serves an admin-only login + dashboard. The storefront never shows the admin panel.</p>
+  </div>
+  <div className="gk-repo-card">
+    <strong>Email notifications</strong>
+    <p>Branded HTML emails for orders, signups, reviews, low stock, and login codes via Brevo SMTP.</p>
+  </div>
+  <div className="gk-repo-card">
+    <strong>Order tracker emails</strong>
+    <p>Amazon-style progress bar (Ordered → Shipped → Out for delivery → Delivered) with product images.</p>
+  </div>
+</div>
+
+## Domains
+
+| Domain | Serves | Login |
+|--------|--------|-------|
+| `gotokart.xyz` / `www.gotokart.xyz` | Storefront | Email OTP (customers) |
+| `admin.gotokart.xyz` | Admin dashboard only | Email + password (admins only) |
+| `docs.gotokart.xyz` | This documentation site | — |
+
+All three storefront/admin hosts are served by the **same single-page app** behind nginx; the frontend detects the `admin.` host (`IS_ADMIN_SITE`) and shows the admin-only login + dashboard. The storefront hides every admin entry point regardless of role, so logging in with admin credentials on the main site behaves like an ordinary customer session.
+
+## OTP login flow
+
+```text
+1. POST /api/auth/otp/request   { email }
+                                → 6-digit code generated, stored (10-min expiry), emailed
+2. POST /api/auth/otp/verify    { email, otp, name? }
+                                → verifies code, creates the user if new, returns JWT
+```
+
+- **Resend cooldown:** 60 seconds per email.
+- **Attempt cap:** 5 wrong tries invalidate the code.
+- New emails are auto-registered with role `USER`; deactivated accounts are blocked.
+- The issued JWT is identical to the password-login token, so the rest of the API is unchanged.
+
+### Admin login
+
+```text
+POST /api/auth/admin/login   { email, password }
+→ 401 if credentials are wrong, 403 if the account isn't ADMIN
+```
+
+The admin panel calls this instead of `/api/auth/login`, so a customer's credentials can never unlock the dashboard.
+
+## Email (Brevo SMTP)
+
+Configured entirely through environment variables in `infra/.env` (see [Infrastructure](infrastructure#email--smtp-environment)):
+
+| Variable | Purpose |
+|----------|---------|
+| `SMTP_HOST` / `SMTP_PORT` | `smtp-relay.brevo.com` / `587` |
+| `SMTP_USER` / `SMTP_PASS` | Brevo SMTP login + key |
+| `EMAIL_FROM` / `EMAIL_FROM_NAME` | Sender identity (`admin@gotokart.xyz`) |
+| `EMAIL_ADMIN` | Inbox that receives all admin alerts |
+| `ADMIN_URL` | Dashboard link embedded in admin emails |
+
+If `SMTP_HOST` is blank, `EmailService` degrades to a no-op (logs instead of sending), so local dev works without mail configured. All sends are `@Async` and best-effort — a mail failure never rolls back an order or fails a login.
+
+### What gets emailed
+
+| Event | Recipient | Trigger |
+|-------|-----------|---------|
+| Login code | Customer | `POST /api/auth/otp/request` |
+| Order confirmation | Customer | Order placed |
+| Order status update | Customer | Status → Shipped / Out for delivery / Delivered / Cancelled |
+| New order | Admin | Order placed |
+| Status change | Admin | Any status transition |
+| New signup | Admin | New account created |
+| New review | Admin | Review submitted (pending moderation) |
+| Low / out of stock | Admin | A product drops to ≤ 5 units after an order |
+| Test email | Admin | **✉️ Test Email** button in the dashboard |
+
+### Test email
+
+A quick way to verify SMTP delivery from the admin dashboard:
+
+```text
+POST /api/admin/test-email   (ADMIN JWT)
+→ { "message": "Test email queued — check the admin inbox in a moment." }
+```
+
+## Order status & tracker emails
+
+Order statuses: `PLACED` → `SHIPPED` → `OUT_FOR_DELIVERY` → `DELIVERED` (or `CANCELLED`).
+
+Admins change status from the dashboard **Orders** tab; each transition emails the customer a clean, **logo-free** email with an Amazon-style progress tracker and a thumbnail of each product. The product image URL is snapshotted onto the order line (`OrderItem.productImageUrl`) at checkout, so historical emails stay accurate even if the product is later edited or deleted.

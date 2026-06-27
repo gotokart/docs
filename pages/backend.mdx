@@ -1,12 +1,15 @@
 # Backend API
 
-GoToKart's backend is a **Spring Boot 3.4** application exposing REST APIs for authentication, users, products, shopping cart, orders, and S3-backed product imagery. It is backed by **MariaDB / MySQL** and secured with **JWT**.
+GoToKart's backend is a **Spring Boot 3.4** application exposing REST APIs for authentication (password **and** email OTP), users, products, shopping cart, orders, reviews, and S3-backed product imagery. It is backed by **MySQL** and secured with **JWT**, and sends transactional email through **Brevo SMTP**.
 
 ## Stack
 
 - Java 21 · Spring Boot 3.4 · Spring Security · Spring Data JPA
 - JJWT 0.11.5 · BCrypt · Maven
 - AWS SDK for Java v2 (`software.amazon.awssdk:s3` + `S3Presigner`)
+- Spring Mail (`spring-boot-starter-mail`) → Brevo SMTP, async HTML emails
+
+> New to the auth/email features? See **[Auth, email & notifications](notifications)** for the OTP flow, admin domain, and the full notification matrix.
 
 ## Base URL
 
@@ -26,13 +29,14 @@ The frontend autodetects which one to use; you only ever change it in one place 
   <a className="gk-chip" href="#images">Product images</a>
   <a className="gk-chip" href="#cart">Cart</a>
   <a className="gk-chip" href="#orders">Orders</a>
+  <a className="gk-chip" href="#admin">Admin &amp; email</a>
 </div>
 
 ## Featured endpoints
 
 <div className="gk-api-card">
-  <span className="gk-method gk-post">POST</span><code>/api/auth/login</code>
-  <p className="gk-api-meta">User login · Auth: no · Returns JWT + user profile.</p>
+  <span className="gk-method gk-post">POST</span><code>/api/auth/otp/request</code>
+  <p className="gk-api-meta">Email a 6-digit login code · Auth: no · Passwordless customer login.</p>
 </div>
 <div className="gk-api-card">
   <span className="gk-method gk-get">GET</span><code>/api/products</code>
@@ -56,17 +60,17 @@ The frontend autodetects which one to use; you only ever change it in one place 
 <a id="auth"></a>
 ## Authentication
 
-GoToKart uses **JWT** tokens. Passwords are hashed with BCrypt.
+GoToKart issues **JWT** tokens for two login paths: **email OTP** (the default for customers) and **email + password** (used by admins). Passwords are hashed with BCrypt.
 
 ### Default admin credentials
 
 | Field | Value |
 |-------|-------|
-| Email | `admin@gotokart.com` |
+| Email | `admin@gotokart.xyz` |
 | Password | `admin123` |
 | Role | `ADMIN` |
 
-The admin account is created automatically on backend startup if it does not exist.
+The admin account is created automatically on backend startup if it does not exist. `admin@gotokart.xyz` is also the inbox that receives all admin notification emails. **Change the password after first login.**
 
 ### Using JWT in requests
 
@@ -80,33 +84,54 @@ Authorization: Bearer <your-jwt-token>
 
 | Method | Path | Auth | Description |
 |--------|------|:---:|-------------|
-| `POST` | `/api/auth/login` | No | Login, returns JWT |
-| `POST` | `/api/auth/register` | No | Register, returns JWT |
-| `GET`  | `/api/users/me`   | JWT | Get current user profile |
+| `POST` | `/api/auth/otp/request` | No | Email a 6-digit login code |
+| `POST` | `/api/auth/otp/verify`  | No | Verify code → JWT (auto-registers new emails) |
+| `POST` | `/api/auth/login`       | No | Password login, returns JWT |
+| `POST` | `/api/auth/admin/login` | No | Password login restricted to `ADMIN` accounts |
+| `POST` | `/api/auth/register`    | No | Password register (always role `USER`), returns JWT |
+| `GET`  | `/api/users/me`         | JWT | Get current user profile |
 
 <details>
-<summary><strong>POST</strong> <code>/api/auth/login</code> — login</summary>
+<summary><strong>POST</strong> <code>/api/auth/otp/request</code> — email a login code</summary>
 
 **Request body**
 
 ```json
-{
-  "email": "admin@gotokart.com",
-  "password": "admin123"
-}
+{ "email": "customer@example.com" }
 ```
 
-**Response**
+**Response** — `{ "message": "Code sent to customer@example.com" }`
+
+**Notes**
+
+- 6-digit code, 10-minute expiry, 60-second resend cooldown, 5-attempt cap.
+- `429` if requested again within the cooldown; `403` if the account is deactivated.
+</details>
+
+<details>
+<summary><strong>POST</strong> <code>/api/auth/otp/verify</code> — verify code, get JWT</summary>
+
+**Request body**
 
 ```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "id": 1,
-  "name": "Admin",
-  "email": "admin@gotokart.com",
-  "role": "ADMIN"
-}
+{ "email": "customer@example.com", "otp": "123456", "name": "Ankit Pandey" }
 ```
+
+`name` is optional and only used when auto-registering a brand-new email.
+
+**Response** — standard auth payload (`token`, `id`, `name`, `email`, `role`).
+</details>
+
+<details>
+<summary><strong>POST</strong> <code>/api/auth/admin/login</code> — admin password login</summary>
+
+**Request body**
+
+```json
+{ "email": "admin@gotokart.xyz", "password": "admin123" }
+```
+
+**Response** — auth payload with `role: "ADMIN"`. Returns `403` if the account is not an admin, so customer credentials can never unlock the admin panel.
 </details>
 
 <details>
@@ -122,7 +147,7 @@ Authorization: Bearer <your-jwt-token>
 }
 ```
 
-**Response** — same shape as login, with `role: "USER"`.
+**Response** — same shape as login. Role is **always forced to `USER`** server-side; a client cannot self-register as `ADMIN`.
 </details>
 
 ---
@@ -296,8 +321,12 @@ If you set `aws.s3.public-base-url` (e.g. a CloudFront distribution), the backen
 
 | Method | Path | Auth | Description |
 |--------|------|:---:|-------------|
-| `POST` | `/api/orders/{userId}/place` | No | Place order (clears cart, decrements stock) |
-| `GET`  | `/api/orders/{userId}`       | No | Order history |
+| `POST`  | `/api/orders/{userId}/place` | No        | Place order (clears cart, decrements stock, emails customer + admin) |
+| `GET`   | `/api/orders/{userId}`       | No        | Order history |
+| `GET`   | `/api/orders`                | ADMIN JWT | List every order, newest first |
+| `PATCH` | `/api/orders/{id}/status`    | ADMIN JWT | Move an order through its lifecycle |
+
+**Order statuses:** `PLACED` → `SHIPPED` → `OUT_FOR_DELIVERY` → `DELIVERED` (or `CANCELLED`). Each change emails the customer an Amazon-style tracker email and notifies the admin.
 
 <details>
 <summary><strong>POST</strong> <code>/api/orders/&#123;userId&#125;/place</code></summary>
@@ -312,8 +341,39 @@ If you set `aws.s3.public-base-url` (e.g. a CloudFront distribution), the backen
 }
 ```
 
-**Note** — on success, immediately refresh cart and orders sections so the user sees the updated state.
+**Notes**
+
+- On success, immediately refresh cart and orders sections so the user sees the updated state.
+- Sends an order confirmation to the customer and a new-order alert to the admin (async, best-effort).
+- Each order line snapshots `productImageUrl` so emails show the real product image.
 </details>
+
+<details>
+<summary><strong>PATCH</strong> <code>/api/orders/&#123;id&#125;/status</code></summary>
+
+**Request body**
+
+```json
+{ "status": "OUT_FOR_DELIVERY" }
+```
+
+Allowed values: `PLACED`, `SHIPPED`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED` (case-insensitive). Invalid values return `400`.
+</details>
+
+---
+
+<a id="admin"></a>
+## Admin & email
+
+| Method | Path | Auth | Description |
+|--------|------|:---:|-------------|
+| `GET`   | `/api/admin/stats`            | ADMIN JWT | Dashboard KPIs + low-stock + recent orders |
+| `GET`   | `/api/admin/revenue?period=`  | ADMIN JWT | Time-bucketed revenue (daily/weekly/monthly) |
+| `PATCH` | `/api/admin/users/{id}/role`  | ADMIN JWT | Promote/demote a user |
+| `PATCH` | `/api/admin/users/{id}/active`| ADMIN JWT | Deactivate/reactivate a user |
+| `POST`  | `/api/admin/test-email`       | ADMIN JWT | Send a test email to the admin inbox |
+
+The backend emails `admin@gotokart.xyz` on new orders, status changes, new signups, new reviews, and low stock, and emails customers their login codes, order confirmations, and status updates. See **[Auth, email & notifications](notifications)** for the complete matrix and SMTP setup.
 
 ---
 
@@ -321,4 +381,4 @@ If you set `aws.s3.public-base-url` (e.g. a CloudFront distribution), the backen
 
 Create a database named `gotokart` and configure the JDBC URL, user, and password in `application.properties`. See [Getting started](getting-started) for full examples.
 
-On first startup the backend automatically seeds **102 products** across 11 categories and creates the admin user. The schema migrates automatically (`spring.jpa.hibernate.ddl-auto=update`) — including the new `image_key` column on the `product` table.
+On first startup the backend automatically seeds **102 products** across 11 categories and creates the admin user (`admin@gotokart.xyz`). The schema migrates automatically (`spring.jpa.hibernate.ddl-auto=update`) — including the `image_key` column on `products`, the `product_image_url` snapshot on `order_items`, and the `otp_verifications` table that backs email OTP login.

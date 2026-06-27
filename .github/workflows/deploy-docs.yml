@@ -40,8 +40,8 @@ jobs:
         run: npm ci
 
       - name: Build static site
-        env:
-          BASE_PATH: /docs
+        # Served from the custom root domain docs.gotokart.xyz, so no basePath.
+        # (Set BASE_PATH=/docs only when publishing under gotokart.github.io/docs.)
         run: npm run build
 
       - name: Configure GitHub Pages

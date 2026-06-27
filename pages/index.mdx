@@ -10,8 +10,10 @@ Welcome to the official docs for [GoToKart](https://github.com/gotokart) — a s
   <p>One platform, three repos, one EC2 box. Docker compose underneath, Let's Encrypt on top, and S3 presigned URLs for product imagery.</p>
   <div className="gk-stat-row">
     <span className="gk-stat">Spring Boot 3.4 · Java 21</span>
-    <span className="gk-stat">JWT + BCrypt</span>
+    <span className="gk-stat">JWT + email OTP login</span>
     <span className="gk-stat">Vanilla JS storefront</span>
+    <span className="gk-stat">Dedicated admin domain</span>
+    <span className="gk-stat">Brevo SMTP notifications</span>
     <span className="gk-stat">AWS EC2 + Docker</span>
     <span className="gk-stat">AWS RDS · MySQL 8</span>
     <span className="gk-stat">S3 presigned uploads</span>
@@ -111,6 +113,10 @@ Bytes for product images **never traverse the JVM**. The backend signs short-liv
   <a className="gk-next-card" href="frontend/">
     <strong>Frontend</strong>
     <span>UI structure, three-step S3 upload, image rendering fallback.</span>
+  </a>
+  <a className="gk-next-card" href="notifications/">
+    <strong>Auth, email &amp; notifications</strong>
+    <span>OTP login, admin domain, and Brevo-powered order/admin emails.</span>
   </a>
   <a className="gk-next-card" href="infrastructure/">
     <strong>Infrastructure</strong>

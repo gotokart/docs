@@ -62,7 +62,7 @@ const config: DocsThemeConfig = {
         content="Live at gotokart.xyz — Spring Boot API, vanilla JS storefront, AWS EC2 + S3 + Let's Encrypt."
       />
       <meta property="og:type" content="website" />
-      <meta property="og:url" content="https://gotokart.github.io/docs/" />
+      <meta property="og:url" content="https://docs.gotokart.xyz/" />
       <meta name="twitter:card" content="summary_large_image" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

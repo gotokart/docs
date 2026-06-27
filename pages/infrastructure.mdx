@@ -9,10 +9,14 @@ Full deployment reference for GoToKart on AWS EC2 — domain, TLS, Docker, S3, I
 | | |
 |-|-|
 | **Storefront**     | <code>https://gotokart.xyz</code> · <code>https://www.gotokart.xyz</code> |
-| **API**            | <code>https://gotokart.xyz/api/</code> |
+| **Admin panel**    | <code>https://admin.gotokart.xyz</code> (admin-only login + dashboard) |
+| **Docs**           | <code>https://docs.gotokart.xyz</code> |
+| **API**            | <code>https://gotokart.xyz/api/</code> (also reachable via the admin host) |
 | **HTTP**           | 301-redirected to HTTPS (except `/.well-known/acme-challenge/`) |
 | **TLS issuer**     | Let's Encrypt (ECDSA), webroot challenge |
 | **Auto-renewal**   | `gotokart-cert-renew.timer` — twice daily on EC2 |
+
+The storefront and admin panel are the **same** container/SPA; nginx answers for both hostnames and the frontend shows the admin UI only on the `admin.` host. Add an A record for `admin.gotokart.xyz` (and `docs.gotokart.xyz`) pointing at the EC2 public IP.
 
 ### EC2 instance
 
@@ -96,7 +100,7 @@ The compose file's backend service uses `build.context: ../backend` so the Docke
 ```nginx
 server {
     listen 80;
-    server_name gotokart.xyz www.gotokart.xyz;
+    server_name gotokart.xyz www.gotokart.xyz admin.gotokart.xyz;
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -106,7 +110,9 @@ server {
 
 server {
     listen 443 ssl;
-    server_name gotokart.xyz www.gotokart.xyz;
+    # admin.gotokart.xyz is served by the same SPA; the frontend detects the
+    # "admin." host and shows the admin-only login + dashboard.
+    server_name gotokart.xyz www.gotokart.xyz admin.gotokart.xyz;
 
     ssl_certificate     /etc/nginx/certs/fullchain.pem;
     ssl_certificate_key /etc/nginx/certs/privkey.pem;
@@ -116,11 +122,13 @@ server {
 
 ### First-time issuance
 
+Include the admin subdomain (and docs, if served from the same box) in the cert:
+
 ```bash
 sudo certbot certonly --webroot \
   -w /home/ec2-user/gotokart/infra/certbot-webroot \
-  -d gotokart.xyz -d www.gotokart.xyz \
-  -m you@example.com --agree-tos --no-eff-email
+  -d gotokart.xyz -d www.gotokart.xyz -d admin.gotokart.xyz \
+  -m admin@gotokart.xyz --agree-tos --no-eff-email
 ```
 
 Then copy `fullchain.pem` and `privkey.pem` from `/etc/letsencrypt/live/gotokart.xyz/` into `infra/certs/` and `docker compose restart nginx`.
@@ -243,6 +251,35 @@ nano .env
 ```
 
 Fill in `RDS_HOST`, `RDS_USERNAME`, `RDS_PASSWORD`, and `JWT_SECRET`. The compose file substitutes these into the backend container's `SPRING_DATASOURCE_URL` automatically. `infra/.env` is git-ignored (`.gitignore` already covers `.env` and `*.env`).
+
+<a id="email--smtp-environment"></a>
+### Email / SMTP environment
+
+Transactional email (login codes + order/admin notifications) is sent via **Brevo SMTP**. Add these to `infra/.env`; the compose file passes them through to the backend:
+
+```bash
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=xxxxxxxx@smtp-brevo.com     # Brevo SMTP login
+SMTP_PASS=xsmtpsib-…                   # Brevo SMTP key (never commit this)
+EMAIL_FROM=admin@gotokart.xyz          # verified sender in Brevo
+EMAIL_FROM_NAME=GoToKart
+EMAIL_ADMIN=admin@gotokart.xyz         # inbox that receives admin alerts
+ADMIN_URL=https://admin.gotokart.xyz   # dashboard link inside admin emails
+```
+
+**Before sending works:** verify `admin@gotokart.xyz` (or authenticate the `gotokart.xyz` domain with SPF/DKIM) in Brevo, and make sure the account is activated for sending. If `SMTP_HOST` is left blank the backend logs emails instead of sending them. After editing `.env`, recreate the container so it picks up the new values:
+
+```bash
+docker compose up -d --force-recreate backend
+docker compose logs backend | grep EmailService   # expect: ✉️ EmailService ready
+```
+
+Verify delivery end-to-end with the **Test Email** button in the admin dashboard, or:
+
+```bash
+curl -s -X POST http://localhost:8080/api/admin/test-email -H 'Authorization: Bearer <admin-jwt>'
+```
 
 ### 5. (Optional) migrate from the old MariaDB container
 
